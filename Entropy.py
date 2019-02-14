@@ -23,7 +23,7 @@ class EntropyProduction(TimeEvolution):
 		self.entropy = self._multiply_in_fourier_space()
 
 	def load(self, label):
-		self.super().load(label)
+		super(EntropyProduction, self).load(label)
 		self.final_phi = self.phi[-2]
 
 
@@ -47,7 +47,7 @@ class EntropyProduction(TimeEvolution):
 
 	def plot_entropy(self, label):
 		plt.rc('text', usetex=True)
-		plt.rc('font', family='serif', size=16)
+		plt.rc('font', family='serif', size=12)
 
 		plt.subplot(2, 1, 1)
 		plt.plot(np.real(self.entropy), 'k-')
