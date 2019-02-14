@@ -26,9 +26,9 @@ class EntropyProduction(TimeEvolution):
 		reg = 1
 		self.final_phi = self.phi[-2]
 		self.correlation_matrix = np.load("correlation.npy")
-		self._make_laplacian_fourier()
-		self._make_first_order_matrix_quad_bd()
-		self._make_noise_matrix_quad_bd()
+		self._make_laplacian_matrix()
+		self._make_first_order_matrix()
+		self._make_noise_matrix()
 		self._add_to_translational_dof(reg=reg)
 
 
@@ -227,6 +227,19 @@ class EntropyProductionFourier(EntropyProduction):
 		matrix_ifft = ifft(matrix).T.conj()
 		matrix_ifft = ifft(matrix_ifft).T.conj() * self.size
 		return matrix_ifft
+
+	def _make_noise_matrix_quad_bd(self):
+		diag = -2*self._laplacian_fourier + self.u*(self.phi_shift-self.phi_target)
+		self.noise_matrix = sp.diags([diag], [0], shape=(self.size, self.size))
+
+	def _make_noise_matrix_lin_bd(self):
+		diag = -2*self._laplacian_fourier + self.u
+		self.noise_matrix = sp.diags([diag], [0], shape=(self.size, self.size))
+
+
+
+
+
 
 
 
