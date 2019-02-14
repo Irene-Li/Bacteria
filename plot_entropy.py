@@ -7,22 +7,22 @@ rates = [1e-7, 5e-7, 1e-6, 2.5e-6, 5e-6, 1.5e-5, 1.6e-5,
 
 l = len(rates)
 
-u = np.zeros(l)
+us = np.zeros(l)
 S = np.zeros(l)
 epsilon = np.zeros(l)
 
 
-for u in rates:
+for (i, u) in enumerate(rates):
     label = "X_200_u_{}".format(u)
     solver = EntropyProduction()
     solver.load(label)
     solver.read_entropy(label)
     S[i] = np.sum(solver.entropy)
-    u[i] = solver.u
+    us[i] = solver.u
     epsilon[i] = solver.a**2/(4*solver.k) - solver.u
 
-plt.plot(u, S)
+plt.plot(us, S)
 plt.show()
 
 plt.plot(epsilon, S)
-plt.show() 
+plt.show()
