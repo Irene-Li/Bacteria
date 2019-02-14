@@ -17,6 +17,7 @@ for (i, u) in enumerate(rates):
     solver = EntropyProductionFourier()
     solver.load(label)
     solver.read_entropy(label)
+    solver.plot_entropy(label)
     S[i] = np.sum(solver.entropy)
     us[i] = solver.u
 
