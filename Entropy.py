@@ -63,26 +63,6 @@ class EntropyProduction(TimeEvolution):
 			self.calculate_entropy()
 			self.write_entropy(label)
 
-	def small_amp_expansion(self):
-		size = 10
-		assert np.abs(self.phi_target) < 1e-10
-		A1 = - 2 * self.u
-		epsilon = self.a**2 /(4 * self.k) - self.u*self.phi_shift
-		k_c = np.sqrt(self.a/(2 * self.k))
-		def A0(k):
-			return self.a * k**2 - self.k * k**4 - self.u*(self.phi_shift)
-		def K(k):
-			return 2 * k**2 + self.u * self.phi_shift
-		ks = 2 * np.pi * np.arange(size)/self.X
-		S = np.zeros(size)
-		for (i, k) in enumerate(ks):
-			f1 = (1 - K(k+k_c)/K(k))/(A0(k) + A0(k+k_c))
-			print(f1)
-			f2 = (1 - K(k-k_c)/K(k))/(A0(k) + A0(k-k_c))
-			S[i] = epsilon * A1**2 * (f1 + f2)
-
-		plt.plot(S)
-		plt.show()
 
 	def _make_correlation_matrix(self):
 		self.correlation_matrix = sl.solve_lyapunov(self.first_order_matrix, (-self.noise_matrix).todense())
@@ -202,6 +182,20 @@ class EntropyProductionFourier(EntropyProduction):
 		S_real = self._ifft_matrix(S)
 		self.entropy = S_real.diagonal()
 
+	def small_param_expansion(self):
+		phi_k = fft(self.final_phi)
+		phi_cube_k = fft(self.final_phi**3)
+		mu = self._laplacian_fourier * (self.a * (- phi_k + phi_cube_k))
+		mu -= self.k * self._laplacian_fourier**2 * phi_k
+		f = - self.u * fft((self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target))
+
+		plt.plot(mu - f)
+		plt.show()
+
+		plt.plot(ifft(mu - f))
+		plt.show()
+
+
 	def _make_first_order_matrix_lin_bd(self):
 		A = self._fft_matrix(np.diag(self.final_phi**2))
 		self.first_order_matrix_orig = 3 * self.a * np.einsum('i, ij -> ij', self._laplacian_fourier, A)
@@ -257,7 +251,7 @@ if __name__ == "__main__":
 
 	solver = EntropyProductionFourier()
 	solver.load(label)
-	solver.test()
+	solver.read_entropy(label) 
 	# solver.calculate_entropy_quad_bd()
 	# solver.small_amp_expansion()
 	# solver.plot_entropy(label)
