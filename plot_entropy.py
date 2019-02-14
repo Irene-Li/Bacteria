@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Entropy import *
 
-rates = [1e-7, 5e-7, 1e-6, 2.5e-6, 5e-6, 1.5e-5, 1.6e-5,
+rates = [1e-7, 5e-7, 1e-6, 2.5e-6, 5e-6, 1e-5, 1.5e-5, 1.6e-5,
         1.7e-5, 1.8e-5, 1.9e-5, 2e-5, 2.1e-5, 2.2e-5, 2.3e-5, 2.5e-5]
 
 l = len(rates)
@@ -21,8 +21,8 @@ for (i, u) in enumerate(rates):
     us[i] = solver.u
     epsilon[i] = solver.a**2/(4*solver.k) - solver.u
 
-plt.plot(us, S)
+plt.plot(us, S, 'x')
 plt.show()
 
-plt.plot(epsilon, S)
+plt.plot(epsilon, S, 'x')
 plt.show()
