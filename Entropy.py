@@ -183,15 +183,16 @@ class EntropyProductionFourier(EntropyProduction):
 		self.entropy = S_real.diagonal()
 
 	def small_param_expansion(self):
+		self._make_laplacian_matrix()
+		self.final_phi = self.phi[-2]
 		phi_k = fft(self.final_phi)
 		phi_cube_k = fft(self.final_phi**3)
 		mu = self._laplacian_fourier * (self.a * (- phi_k + phi_cube_k))
 		mu -= self.k * self._laplacian_fourier**2 * phi_k
-		f = - self.u * fft((self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target))
+		f = fft((self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target))
 
-		plt.plot(mu - f)
-		plt.show()
-
+		plt.plot(ifft(mu))
+		plt.plot(ifft(f)) 
 		plt.plot(ifft(mu - f))
 		plt.show()
 
@@ -251,7 +252,8 @@ if __name__ == "__main__":
 
 	solver = EntropyProductionFourier()
 	solver.load(label)
-	solver.read_entropy(label) 
+	solver.read_entropy(label)
+	solver.small_param_expansion()
 	# solver.calculate_entropy_quad_bd()
 	# solver.small_amp_expansion()
 	# solver.plot_entropy(label)
