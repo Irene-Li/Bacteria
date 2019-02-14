@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from scipy.integrate import ode, cumtrapz
-import json 
+import json
 
 
 class TimeEvolution:
@@ -18,19 +18,19 @@ class TimeEvolution:
 		np.save("{}_data.npy".format(label), self.phi)
 
 		params = {
-			'T': self.T, 
-			'dt': self.dt, 
-			'dx': self.dx, 
-			'X': self.X, 
+			'T': self.T,
+			'dt': self.dt,
+			'dx': self.dx,
+			'X': self.X,
 			'n_batches': self.n_batches,
 			'step_size': self.step_size,
-			'size': self.size,  
-			'a': self.a,  
-			'k': self.k, 
-			'u': self.u, 
-			'phi_shift': self.phi_shift, 
+			'size': self.size,
+			'a': self.a,
+			'k': self.k,
+			'u': self.u,
+			'phi_shift': self.phi_shift,
 			'phi_target': self.phi_target
-		} 
+		}
 
 		with open('{}_params.json'.format(label), 'w') as f:
 			json.dump(params, f)
@@ -42,20 +42,20 @@ class TimeEvolution:
 		with open('{}_params.json'.format(label), 'r') as f:
 			params = json.load(f)
 		self.a = params['a']
-		self.k = params['k'] 
+		self.k = params['k']
 		self.u = params['u']
 		self.phi_shift = params['phi_shift']
-		self.phi_target = params['phi_target']  
+		self.phi_target = params['phi_target']
 		self.X = params['X']
-		self.T = params['T'] 
-		self.dt = params['dt'] 
-		self.dx = params['dx'] 
+		self.T = params['T']
+		self.dt = params['dt']
+		self.dx = params['dx']
 		self.size = params['size']
 		self.n_batches = params['n_batches']
 		self.step_size = params['step_size']
 
 	def evolve(self):
-		pass 
+		pass
 
 
 	def continue_evolution(self, n_steps):
@@ -71,9 +71,9 @@ class TimeEvolution:
 		t_grid_size = self.step_size * t_ratio
 		phi_plot = self.phi[::t_ratio, 2:-2:2]
 
-		ymesh, xmesh = np.mgrid[slice(0, self.T, t_grid_size), 
+		ymesh, xmesh = np.mgrid[slice(0, self.T, t_grid_size),
 								slice(0, self.X + self.dx, self.dx*2)]
-		
+
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif', size=15)
 
@@ -91,13 +91,13 @@ class TimeEvolution:
 		f = self._compute_f()
 		t = np.linspace(0, self.T, self.n_batches)
 		phi_bar = self._average(self.phi)
-		f_flat = - self.a/2 * phi_bar**2 + self.a/4 * phi_bar**4 
+		f_flat = - self.a/2 * phi_bar**2 + self.a/4 * phi_bar**4
 		q_c = np.sqrt(self.a/(2 * self.k))
 		f_tanh =  - 1/4 * self.a + 1/(3 * q_c * self.X) * self.a + self.k*2*q_c/(3 * self.X)
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')
 
-		
+
 		plt.plot(t, f, 'k-', linewidth=2, label='True free energy')
 		plt.plot(t, f_flat, 'y--', linewidth=1.5, label='Free energy for a uniform distribution')
 		plt.plot((t[0], t[-1]), (f_tanh, f_tanh), 'c--', linewidth=1.5, label='Free energy using tanh approximation')
@@ -110,7 +110,7 @@ class TimeEvolution:
 		plt.close()
 
 	def plot_current(self, label):
-		phi = self.phi[-1, 2:-2] 
+		phi = self.phi[-1, 2:-2]
 		phi_dot = - (phi- self.phi_target) * (phi + self.phi_shift)
 		x = np.arange(0, (self.size)* self.dx, self.dx)[2:-2]
 		current = - cumtrapz(phi_dot, x, initial=0)
@@ -122,15 +122,15 @@ class TimeEvolution:
 		plt.title(r'$J(x)$ in steady state')
 		plt.xlabel(r'$x$')
 		plt.ylabel(r'$J(x)$')
-		plt.tight_layout() 
+		plt.tight_layout()
 		plt.savefig('{}_current.pdf'.format(label))
-		plt.close() 
+		plt.close()
 
 	def plot_phi_bar_dot(self, label):
 		phi_dot = -(self.phi- self.phi_target) * (self.phi + self.phi_shift)
 		phi_bar_dot = self._average(phi_dot)
 		print(phi_bar_dot[-1])
-		
+
 		t = np.linspace(0, self.T, self.n_batches)
 
 		plt.rc('text', usetex=True)
@@ -180,7 +180,7 @@ class TimeEvolution:
 
 	def plot_samples(self, label, n=2):
 		assert n >= 0
-		phi_b = 1 
+		phi_b = 1
 		x = np.arange(0, (self.size)* self.dx, self.dx)
 		step = int(self.n_batches/(n-1)-1)
 
@@ -191,7 +191,7 @@ class TimeEvolution:
 		for i in range(0, self.n_batches, step):
 			ax1.plot(x[2:-2], self.phi[i, 2:-2], '-', label=r't ={}'.format(i*self.step_size))
 			phi_dot = - (self.phi[i, 2:-2] + self.phi_shift) * (self.phi[i, 2:-2] - self.phi_target)
-			ax2.plot(x[2:-2], phi_dot, '-', label=r't ={}'.format(i*self.step_size))	
+			ax2.plot(x[2:-2], phi_dot, '-', label=r't ={}'.format(i*self.step_size))
 
 		ax1.plot((0, x[-1]), (self.phi_target, self.phi_target), 'y--')
 		ax1.set_title(r'Samples of $\phi$ over time')
@@ -208,10 +208,10 @@ class TimeEvolution:
 		plt.close()
 
 	def plot_steady_state(self, label, kink=0):
-		phi_liquid = 1 
+		phi_liquid = 1
 		if kink > 0:
 			X = ((self.size-3) * self.dx)/(2 * kink)
-			phi_liquid = 2 * np.tanh(X/(np.sqrt(2 * self.k/ self.a))) + 2 * np.tanh(3 * X/(np.sqrt(2 * self.k/ self.a))) - 3 
+			phi_liquid = 2 * np.tanh(X/(np.sqrt(2 * self.k/ self.a))) + 2 * np.tanh(3 * X/(np.sqrt(2 * self.k/ self.a))) - 3
 		x = np.arange(0, (self.size)* self.dx, self.dx)[2:-2]
 
 		plt.rc('text', usetex=True)
@@ -226,21 +226,21 @@ class TimeEvolution:
 		plt.close()
 
 	def _modify_params():
-		pass 
+		pass
 
 	def rescale_to_standard():
-		pass 
+		pass
 
 	def _sin_surface(self, phi_average):
 		x = np.arange(0, self.dx * (self.size), self.dx)
-		phi_initial = phi_average + 0.2*np.cos(2*np.pi*x/self.X) 
-		phi_initial += 0.1*np.cos(4*np.pi*x/self.X) + 0.1*np.cos(8*np.pi*x/self.X) 
+		phi_initial = phi_average + 0.2*np.cos(2*np.pi*x/self.X)
+		phi_initial += 0.1*np.cos(4*np.pi*x/self.X) + 0.1*np.cos(8*np.pi*x/self.X)
 		return self._enforce_bc(phi_initial)
 
 	def _make_shifted_interface(self, phi_average):
 		shift = 0.1
 		new_phi_average = phi_average + shift
-		self.phi_initial = self._slow_mfold(new_phi_average) - shift 
+		self.phi_initial = self._slow_mfold(new_phi_average) - shift
 		self.phi_initial = self._enforce_bc(self.phi_initial)
 
 	def _random_init(self, phi_average):
@@ -258,7 +258,7 @@ class TimeEvolution:
 
 		x = np.arange(0, self.size * self.dx, self.dx)
 		phi_initial = phi_b * np.tanh(q_c * (x - x_0))
-		
+
 		return self._enforce_bc(phi_initial)
 
 	def _double_tanh(self, phi_average):
@@ -273,14 +273,13 @@ class TimeEvolution:
 
 
 	def _average(self, phi):
-		l = phi.shape[-1] 
+		l = phi.shape[-1]
 		s = np.sum(phi[:, 1:-1], axis = -1)
 		s += 0.5 * (phi[:, 0] + phi[:, -1])
 		return s/(l-1)
 
 	def _average_vector(self, phi):
-		l = phi.size 
+		l = phi.size
 		s = np.sum(phi[1:-1])
 		s += 0.5 * (phi[0] + phi[-1])
 		return s/(l-1)
-

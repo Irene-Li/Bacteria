@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os.path
 import scipy.sparse as sp
 import scipy.linalg as sl
 from scipy.fftpack import fft, ifft, fftfreq
@@ -54,7 +55,12 @@ class EntropyProduction(TimeEvolution):
 		np.save("{}_entropy.npy".format(label), self.entropy)
 
 	def read_entropy(self, label):
-		self.entropy = np.load("{}_entropy.npy".format(label))
+		filename = "{}_entropy.npy".format(label)
+		if os.path.isfile(filename):
+			self.entropy = np.load(filename)
+		else:
+			self.calculate_entropy()
+			self.write_entropy(label) 
 
 	def small_amp_expansion(self):
 		size = 10
