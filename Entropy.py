@@ -12,7 +12,6 @@ class EntropyProduction(TimeEvolution):
 
 	def calculate_entropy(self):
 		reg = 1
-		self.final_phi = self.phi[-2]
 
 		self._make_laplacian_matrix()
 		self._make_first_order_matrix()
@@ -23,10 +22,13 @@ class EntropyProduction(TimeEvolution):
 		self.correlation_matrix = sp.csr_matrix(self.correlation_matrix)
 		self.entropy = self._multiply_in_fourier_space()
 
+	def load(self, label):
+		self.super().load(label)
+		self.final_phi = self.phi[-2]
+
 
 	def test(self):
 		reg = 1
-		self.final_phi = self.phi[-2]
 		self.correlation_matrix = np.load("correlation.npy")
 		self._make_laplacian_matrix()
 		self._make_first_order_matrix()
@@ -44,11 +46,17 @@ class EntropyProduction(TimeEvolution):
 
 
 	def plot_entropy(self, label):
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif', size=16)
+
 		plt.subplot(2, 1, 1)
-		plt.plot(np.real(self.entropy))
+		plt.plot(np.real(self.entropy), 'k-')
+		plt.title("The spatial decomposition of the entropy production")
+		plt.ylabel(r"\dot{S}")
 		plt.subplot(2, 1, 2)
-		plt.plot(self.final_phi)
-		plt.title("total entropy production = {}".format(np.sum(self.entropy)))
+		plt.plot(self.final_phi, 'k-')
+		plt.ylabel(r"\phi")
+		plt.xlabel(r"x")
 		plt.savefig("{}_entropy.pdf".format(label))
 		plt.close()
 
@@ -167,7 +175,6 @@ class EntropyProductionFourier(EntropyProduction):
 
 	def calculate_entropy(self):
 		reg = 1
-		self.final_phi = self.phi[-2]
 
 		self._make_laplacian_matrix()
 		self._make_first_order_matrix()
@@ -192,7 +199,7 @@ class EntropyProductionFourier(EntropyProduction):
 		f = fft((self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target))
 
 		plt.plot(ifft(mu))
-		plt.plot(ifft(f)) 
+		plt.plot(ifft(f))
 		plt.plot(ifft(mu - f))
 		plt.show()
 
