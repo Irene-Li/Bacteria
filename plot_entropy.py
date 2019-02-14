@@ -14,7 +14,7 @@ epsilon = np.zeros(l)
 
 for (i, u) in enumerate(rates):
     label = "X_200_u_{}".format(u)
-    solver = EntropyProduction()
+    solver = EntropyProductionFourier()
     solver.load(label)
     solver.read_entropy(label)
     S[i] = np.sum(solver.entropy)

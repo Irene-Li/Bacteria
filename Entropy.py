@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os.path
 import scipy.sparse as sp
 import scipy.linalg as sl
+import scipy.sparse.linalg
 from scipy.fftpack import fft, ifft, fftfreq
 import json
 from TimeEvolution import TimeEvolution
@@ -60,7 +61,7 @@ class EntropyProduction(TimeEvolution):
 			self.entropy = np.load(filename)
 		else:
 			self.calculate_entropy()
-			self.write_entropy(label) 
+			self.write_entropy(label)
 
 	def small_amp_expansion(self):
 		size = 10
@@ -84,7 +85,7 @@ class EntropyProduction(TimeEvolution):
 		plt.show()
 
 	def _make_correlation_matrix(self):
-		self.correlation_matrix = sl.solve_continuous_lyapunov(self.first_order_matrix, (-self.noise_matrix).todense())
+		self.correlation_matrix = sl.solve_lyapunov(self.first_order_matrix, (-self.noise_matrix).todense())
 
 		# Check accuracy of the Lyapunov eq
 		temp = self.first_order_matrix.dot(self.correlation_matrix) + self.correlation_matrix.dot(self.first_order_matrix.T.conj())
