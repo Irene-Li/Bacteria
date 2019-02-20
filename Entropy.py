@@ -51,12 +51,12 @@ class EntropyProduction(TimeEvolution):
 
 		plt.subplot(2, 1, 1)
 		plt.plot(np.real(self.entropy), 'k-')
-		plt.title("The spatial decomposition of the entropy production")
-		plt.ylabel(r"\dot{S}")
+		plt.title(r"The spatial decomposition of the entropy production")
+		plt.ylabel(r"$\dot{S}$")
 		plt.subplot(2, 1, 2)
 		plt.plot(self.final_phi, 'k-')
-		plt.ylabel(r"\phi")
-		plt.xlabel(r"x")
+		plt.ylabel(r"$\phi$")
+		plt.xlabel(r"$x$")
 		plt.savefig("{}_entropy.pdf".format(label))
 		plt.close()
 
@@ -173,7 +173,7 @@ class EntropyProductionFourier(EntropyProduction):
 			self._make_first_order_matrix = self._make_first_order_matrix_lin_bd
 			self._make_noise_matrix = self._make_noise_matrix_lin_bd
 
-	def calculate_entropy(self):
+	def calculate_entropy(self, with_A_tilde=True):
 		reg = 1
 
 		self._make_laplacian_matrix()
@@ -183,24 +183,61 @@ class EntropyProductionFourier(EntropyProduction):
 		self._make_correlation_matrix()
 
 		self.correlation_matrix = sp.csr_matrix(self.correlation_matrix)
-		S = self.first_order_matrix_orig @ (self.correlation_matrix @ self.first_order_matrix_orig.T.conj())
-		S = 2 * np.einsum('ij, j->ij', S.todense(), 1/self.noise_matrix.diagonal()) + self.first_order_matrix_orig.todense()
-
+		if with_A_tilde:
+			S = self.u * self._calculate_entropy_with_A_tilde()
+		else:
+			S = self._calculate_entropy_with_jac()
 		S_real = self._ifft_matrix(S)
 		self.entropy = S_real.diagonal()
+		print("total entropy production: ", np.sum(self.entropy))
+
+	def compare_entropy(self):
+		reg = 1
+
+		self._make_laplacian_matrix()
+		self._make_first_order_matrix()
+		self._make_noise_matrix()
+		self._add_to_translational_dof(reg=reg)
+		self._make_correlation_matrix()
+
+		self.correlation_matrix = sp.csr_matrix(self.correlation_matrix)
+		S1 = self.u * self._calculate_entropy_with_A_tilde()
+		S2 = self._calculate_entropy_with_jac()
+		S1_real = self._ifft_matrix(S1)
+		S2_real = self._ifft_matrix(S2)
+		plt.plot(np.diag(S1_real), label='with A tilde')
+		plt.plot(np.diag(S2_real), label='with jac')
+		plt.legend()
+		plt.show()
+
+
+	def _calculate_entropy_with_jac(self):
+		S = self.first_order_matrix_orig @ (self.correlation_matrix @ self.first_order_matrix_orig.T.conj())
+		S = 2 * np.einsum('ij, j->ij', S.todense(), 1/self.noise_matrix.diagonal()) + self.first_order_matrix_orig.todense()
+		return S
+
+
+	def _calculate_entropy_with_A_tilde(self):
+		self._make_A_tilde()
+		S = self.first_order_matrix_orig @ (self.correlation_matrix @ self.A_tilde.T.conj())
+		S = 2 * np.einsum('ij, j->ij', S.todense(), 1/self.noise_matrix.diagonal()) + self.A_tilde.todense()
+		return S
+
+	def _make_A_tilde(self):
+		prefactor = (self.phi_shift + self.phi_target)/2
+		A_tilde = 3 * self.a * prefactor * self._fft_matrix(np.diag(self.final_phi**2))
+		self.A_tilde = sp.csr_matrix(A_tilde)
+		diag = prefactor*(- self.a - self.k * self._laplacian_fourier) - (self.phi_shift - self.phi_target)
+		self.A_tilde += sp.diags([diag], [0], shape=(self.size, self.size))
+		A = self._fft_matrix(np.diag(2 * self.final_phi))
+		self.A_tilde -= sp.csr_matrix(A)
+
 
 	def small_param_expansion(self):
 		self._make_laplacian_matrix()
-		self.final_phi = self.phi[-2]
-		phi_k = fft(self.final_phi)
-		phi_cube_k = fft(self.final_phi**3)
-		mu = self._laplacian_fourier * (self.a * (- phi_k + phi_cube_k))
-		mu -= self.k * self._laplacian_fourier**2 * phi_k
-		f = fft((self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target))
-
-		plt.plot(ifft(mu))
+		f = self.u * fft((self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target))
+		f /= ( - 2 * self._laplacian_fourier + self.u * (self.phi_shift + self.phi_target))
 		plt.plot(ifft(f))
-		plt.plot(ifft(mu - f))
 		plt.show()
 
 
@@ -238,7 +275,7 @@ class EntropyProductionFourier(EntropyProduction):
 		return matrix_ifft
 
 	def _make_noise_matrix_quad_bd(self):
-		diag = -2*self._laplacian_fourier + self.u*(self.phi_shift-self.phi_target)
+		diag = -2*self._laplacian_fourier + self.u*(self.phi_shift+self.phi_target)
 		self.noise_matrix = sp.diags([diag], [0], shape=(self.size, self.size))
 
 	def _make_noise_matrix_lin_bd(self):
@@ -255,12 +292,12 @@ class EntropyProductionFourier(EntropyProduction):
 
 if __name__ == "__main__":
 
-	label = 'u_1e-06'
+	label = 'medium_box_u_1e-6_2'
 
 	solver = EntropyProductionFourier()
 	solver.load(label)
-	solver.read_entropy(label)
-	solver.small_param_expansion()
-	# solver.calculate_entropy_quad_bd()
-	# solver.small_amp_expansion()
+	# solver.read_entropy(label)
+	# solver.small_param_expansion()
+	solver.compare_entropy()
+
 	# solver.plot_entropy(label)
