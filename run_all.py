@@ -1,7 +1,7 @@
 import numpy as np
 from FdEvolution import *
 
-rates = [6e-6, 7e-6, 8e-6, 9e-6, 1.1e-5]
+rates = [1e-8, 5e-8, 3e-7, 7e-7, 1e-7, 5e-7]
 
 
 # parameters of the differential equation
@@ -26,7 +26,7 @@ random = False
 for u in rates:
 	label = 'X_200_u_{}'.format(u)
 	print(label)
-	T = 0.5/u
+	T = 1/u
 	solver = FdEvolution(a, k, u, phi_target, phi_shift)
 	solver.initialise(X, dx, T, dt, n_batches, phi_init, random=random)
 	solver.evolve()

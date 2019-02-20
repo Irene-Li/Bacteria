@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Entropy import *
 
-rates = [1e-7, 5e-7, 1e-6, 2.5e-6, 5e-6, 6e-6, 7e-6, 8e-6, 9e-6, 1e-5,
+rates = [1e-8, 5e-8, 1e-7, 3e-7, 5e-7, 7e-7, 1e-6, 2.5e-6,
+         5e-6, 6e-6, 7e-6, 8e-6, 9e-6, 1e-5,
         1.1e-5, 1.5e-5, 1.6e-5,
         1.7e-5, 1.8e-5, 1.9e-5, 2e-5, 2.1e-5, 2.2e-5, 2.3e-5, 2.5e-5]
 
