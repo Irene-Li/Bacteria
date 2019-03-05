@@ -203,6 +203,46 @@ class EntropyProductionFourier(EntropyProduction):
 		plt.legend()
 		plt.show()
 
+	def modelAB_entropy(self):
+		self._make_laplacian_matrix()
+
+		L_1_diag = np.sqrt(-self._laplacian_fourier)*1j
+		L_1_diag[int(self.size/2)+1:] = - L_1_diag[int(self.size/2)+1:]
+
+		final_phi_fourier = fft(self.final_phi)
+		final_phi_cube_fourier = fft(self.final_phi**3)
+		mu = self.a*(-final_phi_fourier + final_phi_cube_fourier) - self.k*self._laplacian_fourier*final_phi_fourier
+		J_1 = L_1_diag * mu
+		J_1 = ifft(J_1)
+
+		J_2 = self.u*(self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target)
+		M_2 = self.u*(self.phi_shift+self.phi_target)/2
+
+		entropy_from_model_B_current = J_1*J_1
+		entropy_from_model_A_current = J_2*J_2/M_2
+		self.entropy = entropy_from_model_A_current + entropy_from_model_B_current
+
+		print(self.u)
+
+		plt.plot(self.final_phi)
+		plt.show()
+		plt.close()
+
+		plt.plot(J_1, label="B")
+		plt.plot(J_2, label="A")
+		plt.legend()
+		plt.show()
+		plt.close()
+
+		plt.plot(entropy_from_model_A_current, label='A')
+		plt.plot(entropy_from_model_B_current, label='B')
+		plt.plot(self.entropy, label='total entropy')
+		plt.legend()
+		plt.show()
+
+
+
+
 
 	def _calculate_entropy_with_jac(self):
 		self.correlation_matrix = sp.csr_matrix(self.correlation_matrix)
@@ -319,15 +359,17 @@ class EntropyProductionFourier(EntropyProduction):
 
 
 
+
 if __name__ == "__main__":
 
-	label = 'medium_box_u_1e-6_2'
+	label = 'X_50_u_1e-6'
 
 	solver = EntropyProductionFourier()
 	solver.load(label)
 
 	# solver.read_entropy(label)
-	# solver.small_param_expansion()
-	solver.compare_entropy()
+
+	# solver.compare_entropy()
+	solver.modelAB_entropy()
 
 	# solver.plot_entropy(label)
