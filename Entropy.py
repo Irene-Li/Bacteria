@@ -205,40 +205,37 @@ class EntropyProductionFourier(EntropyProduction):
 
 	def modelAB_entropy(self):
 		self._make_laplacian_matrix()
-
-		L_1_diag = np.sqrt(-self._laplacian_fourier)*1j
-		L_1_diag[int(self.size/2)+1:] = - L_1_diag[int(self.size/2)+1:]
-
-		final_phi_fourier = fft(self.final_phi)
-		final_phi_cube_fourier = fft(self.final_phi**3)
-		mu = self.a*(-final_phi_fourier + final_phi_cube_fourier) - self.k*self._laplacian_fourier*final_phi_fourier
-		J_1 = L_1_diag * mu
-		J_1 = ifft(J_1)
-
-		J_2 = self.u*(self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target)
-		M_2 = self.u*(self.phi_shift+self.phi_target)/2
-
-		entropy_from_model_B_current = J_1*J_1
-		entropy_from_model_A_current = J_2*J_2/M_2
-		self.entropy = entropy_from_model_A_current + entropy_from_model_B_current
-
-		print(self.u)
-
-		plt.plot(self.final_phi)
-		plt.show()
-		plt.close()
-
-		plt.plot(J_1, label="B")
-		plt.plot(J_2, label="A")
-		plt.legend()
-		plt.show()
-		plt.close()
-
-		plt.plot(entropy_from_model_A_current, label='A')
-		plt.plot(entropy_from_model_B_current, label='B')
-		plt.plot(self.entropy, label='total entropy')
-		plt.legend()
-		plt.show()
+		self._make_gradient_matrix()
+		# final_phi_fourier = fft(self.final_phi)
+		# final_phi_cube_fourier = fft(self.final_phi**3)
+		# mu = self.a*(-final_phi_fourier + final_phi_cube_fourier) - self.k*self._laplacian_fourier*final_phi_fourier
+		# J_1 = self._gradient_fourier * mu
+		# J_1 = ifft(J_1)
+		#
+		# J_2 = self.u*(self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target)
+		# M_2 = self.u*(self.phi_shift+self.phi_target)/2
+		#
+		# entropy_from_model_B_current = J_1*J_1
+		# entropy_from_model_A_current = J_2*J_2/M_2
+		# self.entropy = entropy_from_model_A_current + entropy_from_model_B_current
+		#
+		# print(self.u)
+		#
+		# plt.plot(self.final_phi)
+		# plt.show()
+		# plt.close()
+		#
+		# plt.plot(J_1, label="B")
+		# plt.plot(J_2, label="A")
+		# plt.legend()
+		# plt.show()
+		# plt.close()
+		#
+		# plt.plot(entropy_from_model_A_current, label='A')
+		# plt.plot(entropy_from_model_B_current, label='B')
+		# plt.plot(self.entropy, label='total entropy')
+		# plt.legend()
+		# plt.show()
 
 
 
@@ -331,6 +328,21 @@ class EntropyProductionFourier(EntropyProduction):
 	def _make_laplacian_matrix(self):
 		x = np.arange(self.size)
 		self._laplacian_fourier = - 2 * (1 - np.cos(2 * np.pi * x/self.size))
+
+	def _make_gradient_matrix(self):
+		self._gradient_fourier = np.sqrt(- self._laplacian_fourier)*(-1j)
+		n = int(self.size/2)+1
+		self._gradient_fourier[n:] *= (-1)
+
+		gradient_matrix = sp.diags([self._gradient_fourier], [0], shape=(self.size, self.size))
+		gradient_matrix = self._ifft_matrix(gradient_matrix.todense())
+		lap = gradient_matrix.dot(gradient_matrix)
+		print("diagonal: ", np.diag(gradient_matrix, k=0))
+		print("k=1: ", np.diag(gradient_matrix, k=1))
+		print("k=2: ", np.diag(gradient_matrix, k=2))
+		print("k=3: ", np.diag(gradient_matrix, k=3))
+		print("k=4: ", np.diag(gradient_matrix, k=4))
+		print("k=5: ", np.diag(gradient_matrix, k=5))
 
 
 	def _fft_matrix(self, matrix):
