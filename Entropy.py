@@ -369,5 +369,3 @@ if __name__ == "__main__":
 	# solver.compare_entropy()
 	solver.entropy_with_modelAB_currents()
 	solver.plot_entropy_from_modelAB_currents(label)
-
-	# solver.plot_entropy(label)
