@@ -7,3 +7,6 @@ import scipy.sparse.linalg
 from scipy.fftpack import fft, ifft, fftfreq
 import json
 from FdEvolution import FdEvolution
+
+class EvolveModelAB(FdEvolution):
+    

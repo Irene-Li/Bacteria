@@ -256,15 +256,17 @@ class EntropyProductionFourier(EntropyProduction):
 		C = self._project_matrix(self.correlation_matrix)
 		A = self.first_order_matrix_orig.todense()
 		K_diag = self.noise_matrix.diagonal()
-		K_inv_A = np.einsum('ij, i->ij', A, 1/K_diag)
-		K_inv_A_antisym = (K_inv_A - K_inv_A.T.conj())/2
+		B = np.einsum('i, ij->ij', 1/K_diag, A)
+		B_antisym = (B - B.T.conj())/2
 
 		sqrt_K = np.sqrt(K_diag)
-		sqrt_K_inv_A = np.einsum('i, ij->ij', 1/sqrt_K, A)
-		sqrt_K_inv_A_antisym = np.einsum('i, ij->ij', sqrt_K, K_inv_A_antisym)
+		sqrt_K_B = np.einsum('i, ij->ij', sqrt_K, B)
+		sqrt_K_B_antisym = np.einsum('i, ij->ij', sqrt_K, B_antisym)
 
-		S = sqrt_K_inv_A.dot(C.dot(sqrt_K_inv_A_antisym.T.conj()))
-		S = 2 * S + np.einsum('ij, j->ij',sqrt_K_inv_A_antisym, sqrt_K)
+		term1 = - 2*sqrt_K_B.dot(C.dot(sqrt_K_B_antisym))
+
+		S = term1
+
 		return S
 
 	def _calculate_entropy_with_A_tilde_2(self):
