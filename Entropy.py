@@ -78,10 +78,10 @@ class EntropyProduction(TimeEvolution):
 		print("Norm of C: ", sl.norm(self.correlation_matrix))
 		print("Norm of K: ", sp.linalg.norm(self.noise_matrix))
 
-		self.correlation_matrix = self.projection_out_gm.dot(self.correlation_matrix.dot(self.projection_out_gm))
+		C_subspace = self.projection_out_gm.dot(self.correlation_matrix.dot(self.projection_out_gm))
 		A_subspace = self.projection_out_gm.dot(self.first_order_matrix.dot(self.projection_out_gm))
 		K_subspace = self.projection_out_gm.dot(self.noise_matrix.todense().dot(self.projection_out_gm))
-		temp = A_subspace.dot(self.correlation_matrix) + self.correlation_matrix.dot(A_subspace.T.conj())
+		temp = A_subspace.dot(C_subspace) + C_subspace.dot(A_subspace.T.conj())
 		print("Error in Lyapunov eq in subspace: ", sl.norm(temp + K_subspace)/sl.norm(K_subspace))
 
 	def _make_first_order_matrix(self):
@@ -250,14 +250,6 @@ class EntropyProductionFourier(EntropyProduction):
 		S = 2 * np.einsum('ij, j->ij', S, 1/self.noise_matrix.diagonal()) + self.A_tilde
 		return S
 
-	def _calculate_entropy_circ_1(self):
-		self._make_A_tilde()
-		S = self.correlation_matrix.dot(self.A_tilde.T.conj())
-		S = np.einsum('ij, j->ij', S, 1/self.noise_matrix.diagonal())
-		S = np.matmul(S, self.first_order_matrix_orig.todense())
-		S = 2 * S + self.A_tilde
-		return S
-
 	def _calculate_entropy_with_antisym_A(self):
 		# Decompose A into sym and antisymmetric parts
 		K_inv_A = np.einsum('ij, i->ij', self.first_order_matrix_orig.todense(), 1/self.noise_matrix.diagonal())
@@ -280,6 +272,21 @@ class EntropyProductionFourier(EntropyProduction):
 
 		S = self.first_order_matrix_orig.todense().dot(self.correlation_matrix.dot(K_inv_A_tilde.T.conj()))
 		S = 2 * S + A_tilde
+		return S
+
+	def _calculate_entropy_with_conjugate_currents(self):
+		# Take the square root of the noise matrix
+		sqrt_K = np.sqrt(self.noise_matrix.diagonal()/2)
+
+		# Calculate the inverse of C and check it's symmetric 
+		C_inv = sl.inv(self.correlation_matrix)
+		print(sl.norm(C_inv - C_inv.T.conjugate()))
+		C_inv = self._project_matrix(C_inv)
+		C = self._project_matrix(self.correlation)
+		K_inv_A = - np.einsum('i, ij->ij', 2/self.noise_matrix.diagonal(), self.first_order_matrix_orig.todense())
+		E = np.einsum('i, ij->ij', sqrt_K, K_inv_A - C_inv)
+		S = E.dot(C.dot(E.T.conjugate)) + np.einsum('ij, j->ij', E, sqrt_K)
+
 		return S
 
 	def _project_matrix(self, matrix):
