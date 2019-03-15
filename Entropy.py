@@ -193,13 +193,14 @@ class EntropyProductionFourier(EntropyProduction):
 		self._add_to_translational_dof(reg=reg)
 		self._make_correlation_matrix()
 
-		S1 = self._calculate_entropy_with_A_tilde_2()
-		S2 = self._calculate_entropy_with_jac()
+		S1 = self._calculate_entropy_with_jac()
+		S2 = self._calculate_entropy_with_antisym_A()
 		print("total entropy production of S1:", np.trace(S1))
 		print("total entropy production of S2:", np.trace(S2))
 		S1_real = self._ifft_matrix(S1)
 		S2_real = self._ifft_matrix(S2)
-		plt.plot((np.diag(S1)-np.diag(S2))[:10], 'ko--', label='diff')
+		# plt.plot(np.diag(S1_real), label='S1')
+		plt.plot(np.diag(S2_real), label='S2')
 		plt.legend()
 		plt.show()
 
@@ -238,8 +239,8 @@ class EntropyProductionFourier(EntropyProduction):
 		plt.close()
 
 	def _calculate_entropy_with_jac(self):
-		self.correlation_matrix = sp.csr_matrix(self.correlation_matrix)
-		S = self.first_order_matrix_orig @ (self.correlation_matrix @ self.first_order_matrix_orig.T.conj())
+		C = sp.csr_matrix(self.correlation_matrix)
+		S = self.first_order_matrix_orig @ (C @ self.first_order_matrix_orig.T.conj())
 		S = 2 * np.einsum('ij, j->ij', S.todense(), 1/self.noise_matrix.diagonal()) + self.first_order_matrix_orig.todense()
 		return S
 
@@ -252,11 +253,18 @@ class EntropyProductionFourier(EntropyProduction):
 
 	def _calculate_entropy_with_antisym_A(self):
 		# Decompose A into sym and antisymmetric parts
-		K_inv_A = np.einsum('ij, i->ij', self.first_order_matrix_orig.todense(), 1/self.noise_matrix.diagonal())
+		C = self._project_matrix(self.correlation_matrix)
+		A = self.first_order_matrix_orig.todense()
+		K_diag = self.noise_matrix.diagonal()
+		K_inv_A = np.einsum('ij, i->ij', A, 1/K_diag)
 		K_inv_A_antisym = (K_inv_A - K_inv_A.T.conj())/2
 
-		S = self.first_order_matrix_orig.todense().dot(self.correlation_matrix.dot(K_inv_A_antisym.T.conj()))
-		S = 2 * S + np.einsum('i, ij->ij', self.noise_matrix.diagonal(), K_inv_A_antisym)
+		sqrt_K = np.sqrt(K_diag)
+		sqrt_K_inv_A = np.einsum('i, ij->ij', 1/sqrt_K, A)
+		sqrt_K_inv_A_antisym = np.einsum('i, ij->ij', sqrt_K, K_inv_A_antisym)
+
+		S = sqrt_K_inv_A.dot(C.dot(sqrt_K_inv_A_antisym.T.conj()))
+		S = 2 * S + np.einsum('ij, j->ij',sqrt_K_inv_A_antisym, sqrt_K)
 		return S
 
 	def _calculate_entropy_with_A_tilde_2(self):
@@ -278,14 +286,16 @@ class EntropyProductionFourier(EntropyProduction):
 		# Take the square root of the noise matrix
 		sqrt_K = np.sqrt(self.noise_matrix.diagonal()/2)
 
-		# Calculate the inverse of C and check it's symmetric 
+		# Calculate the inverse of C and check it's symmetric
 		C_inv = sl.inv(self.correlation_matrix)
-		print(sl.norm(C_inv - C_inv.T.conjugate()))
-		C_inv = self._project_matrix(C_inv)
-		C = self._project_matrix(self.correlation)
+		print(sl.norm(C_inv.dot(self.correlation_matrix) - np.identity(self.size)))
+		K_C_inv = np.einsum('i, ij->ij', self.noise_matrix.diagonal()/2, C_inv)
+		K_C_inv = self._project_matrix(K_C_inv)
+		C_inv = np.einsum('i, ij->ij', 2/self.noise_matrix.diagonal(), K_C_inv)
+		C = self._project_matrix(self.correlation_matrix)
 		K_inv_A = - np.einsum('i, ij->ij', 2/self.noise_matrix.diagonal(), self.first_order_matrix_orig.todense())
 		E = np.einsum('i, ij->ij', sqrt_K, K_inv_A - C_inv)
-		S = E.dot(C.dot(E.T.conjugate)) + np.einsum('ij, j->ij', E, sqrt_K)
+		S = E.dot(C.dot(E.T.conj())) - np.einsum('ij, j->ij', E, sqrt_K)
 
 		return S
 
@@ -373,6 +383,6 @@ if __name__ == "__main__":
 
 	# solver.read_entropy(label)
 
-	# solver.compare_entropy()
-	solver.entropy_with_modelAB_currents()
-	solver.plot_entropy_from_modelAB_currents(label)
+	solver.compare_entropy()
+	# solver.entropy_with_modelAB_currents()
+	# solver.plot_entropy_from_modelAB_currents(label)
