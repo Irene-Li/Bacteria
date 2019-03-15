@@ -10,14 +10,14 @@ a = 0.5
 k = 1
 
 # simulation parameters
-X = 200
+X = 50
 dx = 0.1
 dt = 1e-3
 n_batches = 100
 
 # Evolve
 u = 1e-6
-T = 0.1/u
+T = 1/u
 phi_shift = 100
 phi_target = 0
 phi_init = 0
