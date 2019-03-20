@@ -230,9 +230,10 @@ class EntropyProductionFourier(EntropyProduction):
 
 		plt.subplot(2, 1, 1)
 		plt.plot(np.real(self.entropy), 'k-', label="total entropy")
-		plt.plot(np.real(self.entropy_from_model_A_current), 'c-', label='model A entropy')
-		plt.plot(np.real(self.entropy_from_model_B_current), 'b-', label='model B entropy')
-		plt.title(r"The spatial decomposition of the entropy production")
+		# plt.plot(np.real(self.entropy_from_model_A_current), 'c-', label='model A entropy')
+		# plt.plot(np.real(self.entropy_from_model_B_current), 'b-', label='model B entropy')
+		plt.title(r"Spatial decomposition of EPR")
+		plt.legend()
 		plt.ylabel(r"$\dot{S}$")
 		plt.subplot(2, 1, 2)
 		plt.plot(self.final_phi, 'k-')
@@ -303,7 +304,7 @@ class EntropyProductionFourier(EntropyProduction):
 		E = np.einsum('i, ij->ij', sqrt_K, B - C_inv)
 		S = E.dot(C.dot(E.T.conj()))
 
-		plt.plot(np.einsum('ij,j->i', E, self.final_phi))
+		plt.plot(np.einsum('ij,j->i', self._ifft_matrix(E), self.final_phi))
 		plt.show()
 
 		return S
