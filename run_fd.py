@@ -6,7 +6,7 @@ from FdEvolution import *
 label = 'X_50_u_1e-6'
 
 # parameters of the differential equation
-a = 0.5
+a = 0.2
 k = 1
 
 # simulation parameters
