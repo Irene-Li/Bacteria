@@ -78,9 +78,9 @@ class EntropyProduction(TimeEvolution):
 		print("Norm of C: ", sl.norm(self.correlation_matrix))
 		print("Norm of K: ", sp.linalg.norm(self.noise_matrix))
 
-		C_subspace = self.projection_out_gm.dot(self.correlation_matrix.dot(self.projection_out_gm))
-		A_subspace = self.projection_out_gm.dot(self.first_order_matrix.dot(self.projection_out_gm))
-		K_subspace = self.projection_out_gm.dot(self.noise_matrix.todense().dot(self.projection_out_gm))
+		C_subspace = self._project_matrix(self.correlation_matrix)
+		A_subspace = self._project_matrix(self.first_order_matrix_orig.todense())
+		K_subspace = self._project_matrix(self.noise_matrix.todense())
 		temp = A_subspace.dot(C_subspace) + C_subspace.dot(A_subspace.T.conj())
 		print("Error in Lyapunov eq in subspace: ", sl.norm(temp + K_subspace)/sl.norm(K_subspace))
 
@@ -109,9 +109,14 @@ class EntropyProduction(TimeEvolution):
 		eigenvalues, eigenvectors = sl.eig(self.first_order_matrix)
 		max_index = np.argmax(eigenvalues)
 		goldstone_mode = eigenvectors[:, max_index]
-		projection_onto_gm = np.outer(goldstone_mode, goldstone_mode.conj())
-		self.first_order_matrix -= projection_onto_gm * reg
-		self.projection_out_gm = np.identity(self.size) - projection_onto_gm
+		self.projection_onto_gm = np.outer(goldstone_mode, goldstone_mode.conj())
+		self.first_order_matrix -= self.projection_onto_gm * reg
+		self.projection_out_gm = np.identity(self.size) - self.projection_onto_gm
+
+	def _project_matrix(self, matrix):
+		return self.projection_out_gm.dot(matrix.dot(self.projection_out_gm))
+
+
 
 	def _make_noise_matrix(self):
 		self.noise_matrix = -2*self._laplacian_sparse + sp.diags([self.u], [0], shape=(self.size, self.size))
@@ -166,7 +171,7 @@ class EntropyProductionFourier(EntropyProduction):
 			self._make_first_order_matrix = self._make_first_order_matrix_lin_bd
 			self._make_noise_matrix = self._make_noise_matrix_lin_bd
 
-	def calculate_entropy(self, with_A_tilde=False):
+	def calculate_entropy(self):
 		reg = 1
 
 		self._make_laplacian_matrix()
@@ -175,11 +180,8 @@ class EntropyProductionFourier(EntropyProduction):
 		self._add_to_translational_dof(reg=reg)
 		self._make_correlation_matrix()
 
-		self.correlation_matrix = sp.csr_matrix(self.correlation_matrix)
-		if with_A_tilde:
-			S = self.u * self._calculate_entropy_with_A_tilde()
-		else:
-			S = self._calculate_entropy_with_jac()
+
+		S = self._calculate_entropy_with_conjugate_currents()
 		S_real = self._ifft_matrix(S)
 		self.entropy = S_real.diagonal()
 		print("total entropy production: ", np.sum(self.entropy))
@@ -193,14 +195,15 @@ class EntropyProductionFourier(EntropyProduction):
 		self._add_to_translational_dof(reg=reg)
 		self._make_correlation_matrix()
 
-		S1 = self._calculate_entropy_with_jac()
+		S1 = self._calculate_entropy_with_conjugate_currents()
 		S2 = self._calculate_entropy_with_antisym_A()
 		print("total entropy production of S1:", np.trace(S1))
 		print("total entropy production of S2:", np.trace(S2))
 		S1_real = self._ifft_matrix(S1)
 		S2_real = self._ifft_matrix(S2)
-		# plt.plot(np.diag(S1_real), label='S1')
+		plt.plot(np.diag(S1_real), label='S1')
 		plt.plot(np.diag(S2_real), label='S2')
+		plt.plot(np.imag(np.diag(S2_real)), label='S2 imag')
 		plt.legend()
 		plt.show()
 
@@ -240,8 +243,9 @@ class EntropyProductionFourier(EntropyProduction):
 
 	def _calculate_entropy_with_jac(self):
 		C = sp.csr_matrix(self.correlation_matrix)
-		S = self.first_order_matrix_orig @ (C @ self.first_order_matrix_orig.T.conj())
-		S = 2 * np.einsum('ij, j->ij', S.todense(), 1/self.noise_matrix.diagonal()) + self.first_order_matrix_orig.todense()
+		A = self.first_order_matrix_orig
+		S = A @ (C @ A.T.conj())
+		S = 2 * np.einsum('ij, j->ij', S.todense(), 1/self.noise_matrix.diagonal()) + A
 		return S
 
 
@@ -261,11 +265,12 @@ class EntropyProductionFourier(EntropyProduction):
 
 		sqrt_K = np.sqrt(K_diag)
 		sqrt_K_B = np.einsum('i, ij->ij', sqrt_K, B)
-		sqrt_K_B_antisym = np.einsum('i, ij->ij', sqrt_K, B_antisym)
+		sqrt_K_B_antisym = np.einsum('ij, j->ij', B_antisym, sqrt_K)
 
 		term1 = - 2*sqrt_K_B.dot(C.dot(sqrt_K_B_antisym))
+		term2 = np.einsum('i, ij->ij', sqrt_K, sqrt_K_B_antisym)
 
-		S = term1
+		S = term1 + term2
 
 		return S
 
@@ -286,23 +291,39 @@ class EntropyProductionFourier(EntropyProduction):
 
 	def _calculate_entropy_with_conjugate_currents(self):
 		# Take the square root of the noise matrix
-		sqrt_K = np.sqrt(self.noise_matrix.diagonal()/2)
+		K_diag = self.noise_matrix.diagonal()/2
+		sqrt_K = np.sqrt(K_diag)
 
-		# Calculate the inverse of C and check it's symmetric
-		C_inv = sl.inv(self.correlation_matrix)
-		print(sl.norm(C_inv.dot(self.correlation_matrix) - np.identity(self.size)))
-		K_C_inv = np.einsum('i, ij->ij', self.noise_matrix.diagonal()/2, C_inv)
-		K_C_inv = self._project_matrix(K_C_inv)
-		C_inv = np.einsum('i, ij->ij', 2/self.noise_matrix.diagonal(), K_C_inv)
 		C = self._project_matrix(self.correlation_matrix)
-		K_inv_A = - np.einsum('i, ij->ij', 2/self.noise_matrix.diagonal(), self.first_order_matrix_orig.todense())
-		E = np.einsum('i, ij->ij', sqrt_K, K_inv_A - C_inv)
-		S = E.dot(C.dot(E.T.conj())) - np.einsum('ij, j->ij', E, sqrt_K)
+		C_reg = C + self.projection_onto_gm
+		C_inv = sl.inv(C_reg)
+		C_inv = self._project_matrix(C_inv)
+
+		B = - np.einsum('i, ij->ij', 1/K_diag, self.first_order_matrix_orig.todense())
+		E = np.einsum('i, ij->ij', sqrt_K, B - C_inv)
+		S = E.dot(C.dot(E.T.conj()))
+
+		plt.plot(np.einsum('ij,j->i', E, self.final_phi))
 
 		return S
 
-	def _project_matrix(self, matrix):
-		return self.projection_out_gm.dot(matrix.dot(self.projection_out_gm))
+	def _calculate_entropy_with_ss_dist(self):
+		K_diag = self.noise_matrix.diagonal()/2
+		C = self._project_matrix(self.correlation_matrix)
+		C_reg = C + self.projection_onto_gm
+		C_inv = sl.inv(C_reg)
+		C_inv = self._project_matrix(C_inv)
+
+		A = - self.first_order_matrix_orig.todense()
+		B = np.einsum('i, ij->ij', 1/K_diag, A)
+		E = B - C_inv
+		K_dot_E = np.einsum('i,ij->ij', K_diag, E)
+		K_dot_C_inv = np.einsum('i,ij->ij', K_diag, C_inv)
+
+		cross_term = K_dot_C_inv.dot(C.dot(E.T.conj()))
+		print(np.trace(cross_term))
+		S = K_dot_E.dot(C.dot(E.T.conj()))
+		return S
 
 	def _make_A_tilde(self):
 		prefactor = (self.phi_shift + self.phi_target)/2
@@ -385,6 +406,9 @@ if __name__ == "__main__":
 
 	# solver.read_entropy(label)
 
-	solver.compare_entropy()
+	# solver.compare_entropy()
 	# solver.entropy_with_modelAB_currents()
 	# solver.plot_entropy_from_modelAB_currents(label)
+
+	solver.calculate_entropy()
+	solver.plot_entropy(label)
