@@ -304,6 +304,7 @@ class EntropyProductionFourier(EntropyProduction):
 		S = E.dot(C.dot(E.T.conj()))
 
 		plt.plot(np.einsum('ij,j->i', E, self.final_phi))
+		plt.show()
 
 		return S
 
