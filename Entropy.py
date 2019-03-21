@@ -14,6 +14,9 @@ class EntropyProduction(TimeEvolution):
 		super(EntropyProduction, self).load(label)
 		self.final_phi = self.phi[-2]
 
+	def calculate_entropy():
+		pass
+
 
 	def plot_entropy(self, label):
 		plt.rc('text', usetex=True)
@@ -21,7 +24,7 @@ class EntropyProduction(TimeEvolution):
 
 		plt.subplot(2, 1, 1)
 		plt.plot(np.real(self.entropy), 'k-')
-		plt.title(r"The spatial decomposition of the entropy production", y=1.2)
+		plt.title(r"The spatial decomposition of the entropy production", y=1.1)
 		plt.ylabel(r"$\dot{S}$")
 		plt.subplot(2, 1, 2)
 		plt.plot(self.final_phi, 'k-')
@@ -318,8 +321,8 @@ if __name__ == "__main__":
 	# solver.entropy_with_modelAB_currents()
 	# solver.plot_entropy_from_modelAB_currents(label)
 
-	solver.calculate_entropy()
+	# solver.calculate_entropy()
 	new_label = label + "_currents"
-
+	solver.read_entropy(new_label)
 	solver.plot_entropy(new_label)
-	solver.save_entropy(new_label)
+	solver.write_entropy(new_label)
