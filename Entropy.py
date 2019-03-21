@@ -10,35 +10,9 @@ from TimeEvolution import TimeEvolution
 
 class EntropyProduction(TimeEvolution):
 
-	def calculate_entropy(self):
-		reg = 1
-
-		self._make_laplacian_matrix()
-		self._make_first_order_matrix()
-		self._make_noise_matrix()
-		self._add_to_translational_dof(reg=reg)
-		self._make_correlation_matrix()
-
-		self.correlation_matrix = sp.csr_matrix(self.correlation_matrix)
-		self.entropy = self._multiply_in_fourier_space()
-
 	def load(self, label):
 		super(EntropyProduction, self).load(label)
 		self.final_phi = self.phi[-2]
-
-
-	def test(self):
-		reg = 1
-		self.correlation_matrix = np.load("correlation.npy")
-		self._make_laplacian_matrix()
-		self._make_first_order_matrix()
-		self._make_noise_matrix()
-		self._add_to_translational_dof(reg=reg)
-
-		C_subspace = self.projection_out_gm.dot(self.correlation_matrix.dot(self.projection_out_gm))
-		A_subspace = self.projection_out_gm.dot(self.first_order_matrix.dot(self.projection_out_gm))
-		K_subspace = self.projection_out_gm.dot(self.noise_matrix.todense().dot(self.projection_out_gm))
-		temp =  A_subspace.dot(C_subspace.dot(A_subspace.T.conj()) - A_subspace.dot(C_subspace))
 
 
 	def plot_entropy(self, label):
@@ -47,7 +21,7 @@ class EntropyProduction(TimeEvolution):
 
 		plt.subplot(2, 1, 1)
 		plt.plot(np.real(self.entropy), 'k-')
-		plt.title(r"The spatial decomposition of the entropy production")
+		plt.title(r"The spatial decomposition of the entropy production", y=1.2)
 		plt.ylabel(r"$\dot{S}$")
 		plt.subplot(2, 1, 2)
 		plt.plot(self.final_phi, 'k-')
@@ -84,14 +58,6 @@ class EntropyProduction(TimeEvolution):
 		temp = A_subspace.dot(C_subspace) + C_subspace.dot(A_subspace.T.conj())
 		print("Error in Lyapunov eq in subspace: ", sl.norm(temp + K_subspace)/sl.norm(K_subspace))
 
-	def _make_first_order_matrix(self):
-		temp_diag = self.a * (3 * self.final_phi**2 - 1)
-		temp = sp.diags([temp_diag], [0], shape=(self.size, self.size))
-		self.first_order_matrix_orig = self._laplacian_sparse * temp - self.k * self._laplacian_sparse * self._laplacian_sparse
-		temp_diag = self.u
-		self.first_order_matrix_orig -= sp.diags([temp_diag], [0], shape=(self.size, self.size))
-		self.first_order_matrix = self.first_order_matrix_orig.todense()
-
 	def _compare_translational_mode(self):
 		eigenvalues, eigenvectors = sl.eig(self.first_order_matrix)
 		sorted_indices = np.argsort(eigenvalues)
@@ -115,50 +81,6 @@ class EntropyProduction(TimeEvolution):
 
 	def _project_matrix(self, matrix):
 		return self.projection_out_gm.dot(matrix.dot(self.projection_out_gm))
-
-
-
-	def _make_noise_matrix(self):
-		self.noise_matrix = -2*self._laplacian_sparse + sp.diags([self.u], [0], shape=(self.size, self.size))
-
-	def _make_laplacian_matrix(self):
-		diags = np.array([1, 1, -2, 1, 1])/self.dx**2
-		self._laplacian_sparse = sp.diags(diags, [-self.size+1, -1, 0, 1, self.size-1], shape=(self.size, self.size))
-
-	def _inverse(self, sparse_matrix):
-		inverse = sp.linalg.inv(sparse_matrix)
-		identity = sp.identity(sparse_matrix.shape[0])
-		print("error of inverse: {}".format(sp.linalg.norm(inverse * sparse_matrix - identity)))
-		return inverse
-
-	def _multiply_in_fourier_space(self):
-		temp = (self.first_order_matrix_orig @ (self.correlation_matrix @ self.first_order_matrix_orig.T)).todense()
-		temp = fft(temp).T.conj()
-		temp = fft(temp).T.conj()/self.size
-		jac_f = fft(self.first_order_matrix_orig.todense()).T.conj()
-		jac_f = fft(jac_f).T.conj()/self.size
-		x = np.arange(self.size)
-		k_f_diag = 1/(4 * (1 - np.cos(2 * np.pi * x/self.size)) + self.u)
-
-		S_f = np.einsum('ij,j->ij', temp, k_f_diag)
-		print("S in fourier: ", 2 * np.trace(S_f) + self.first_order_matrix_orig.diagonal().sum())
-		entropy_f = 2 * S_f.diagonal() + jac_f.diagonal()
-		print(entropy_f)
-		plt.plot(S_f.diagonal())
-		plt.plot(jac_f.diagonal())
-		plt.plot(entropy_f)
-		plt.show()
-
-
-		# Back to real space
-		S = ifft(S_f).T.conj()
-		S = np.real(ifft(S).T.conj() * self.size)
-		S = 2 * S + self.first_order_matrix_orig.todense()
-		print("S in real: ", np.trace(S))
-		plt.plot(np.diag(S))
-		plt.show()
-
-		return np.diag(S)
 
 
 class EntropyProductionFourier(EntropyProduction):
@@ -230,8 +152,6 @@ class EntropyProductionFourier(EntropyProduction):
 
 		plt.subplot(2, 1, 1)
 		plt.plot(np.real(self.entropy), 'k-', label="total entropy")
-		# plt.plot(np.real(self.entropy_from_model_A_current), 'c-', label='model A entropy')
-		# plt.plot(np.real(self.entropy_from_model_B_current), 'b-', label='model B entropy')
 		plt.title(r"Spatial decomposition of EPR")
 		plt.legend()
 		plt.ylabel(r"$\dot{S}$")
@@ -304,9 +224,6 @@ class EntropyProductionFourier(EntropyProduction):
 		E = np.einsum('i, ij->ij', sqrt_K, B - C_inv)
 		S = E.dot(C.dot(E.T.conj()))
 
-		plt.plot(np.einsum('ij,j->i', self._ifft_matrix(E), self.final_phi))
-		plt.show()
-
 		return S
 
 	def _calculate_entropy_with_ss_dist(self):
@@ -322,8 +239,6 @@ class EntropyProductionFourier(EntropyProduction):
 		K_dot_E = np.einsum('i,ij->ij', K_diag, E)
 		K_dot_C_inv = np.einsum('i,ij->ij', K_diag, C_inv)
 
-		cross_term = K_dot_C_inv.dot(C.dot(E.T.conj()))
-		print(np.trace(cross_term))
 		S = K_dot_E.dot(C.dot(E.T.conj()))
 		return S
 
@@ -334,15 +249,6 @@ class EntropyProductionFourier(EntropyProduction):
 		A_tilde += sp.diags([diag], [0], shape=(self.size, self.size)).todense()
 		A = self._fft_matrix(np.diag(2 * self.final_phi))
 		self.A_tilde = A_tilde - A
-
-
-
-	def small_param_expansion(self):
-		self._make_laplacian_matrix()
-		f = self.u * fft((self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target))
-		f /= ( - 2 * self._laplacian_fourier + self.u * (self.phi_shift + self.phi_target))
-		plt.plot(ifft(f))
-		plt.show()
 
 
 	def _make_first_order_matrix_lin_bd(self):
@@ -401,7 +307,7 @@ class EntropyProductionFourier(EntropyProduction):
 
 if __name__ == "__main__":
 
-	label = 'X_50_u_1e-6'
+	label = 'X_200_u_1e-06'
 
 	solver = EntropyProductionFourier()
 	solver.load(label)
@@ -413,4 +319,7 @@ if __name__ == "__main__":
 	# solver.plot_entropy_from_modelAB_currents(label)
 
 	solver.calculate_entropy()
-	solver.plot_entropy(label)
+	new_label = label + "_currents"
+
+	solver.plot_entropy(new_label)
+	solver.save_entropy(new_label)
