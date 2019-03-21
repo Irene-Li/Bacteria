@@ -15,9 +15,9 @@ S = np.zeros(l)
 
 for (i, u) in enumerate(rates):
     label = "X_200_u_{}".format(u)
+    print(label)
     solver = EntropyProductionFourier()
     solver.load(label)
-    solver.calculate_entropy()
 
     new_label = label + "_currents"
     solver.read_entropy(new_label)
