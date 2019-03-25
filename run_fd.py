@@ -30,4 +30,4 @@ solver.evolve()
 solver.save(label)
 end_time = time.time()
 print('The simulation took: ')
-print(end_time - start_time)
+print(end_time - start_time

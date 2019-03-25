@@ -14,27 +14,18 @@ class TimeEvolution:
 		self.phi_shift = phi_shift
 		self.phi_target = phi_target
 
+
+
+	# ============================
+	# Saving and loading from file
+	# ============================
+
 	def save(self, label):
 		np.save("{}_data.npy".format(label), self.phi)
-
-		params = {
-			'T': self.T,
-			'dt': self.dt,
-			'dx': self.dx,
-			'X': self.X,
-			'n_batches': self.n_batches,
-			'step_size': self.step_size,
-			'size': self.size,
-			'a': self.a,
-			'k': self.k,
-			'u': self.u,
-			'phi_shift': self.phi_shift,
-			'phi_target': self.phi_target
-		}
+		params = self._make_params_dict()
 
 		with open('{}_params.json'.format(label), 'w') as f:
 			json.dump(params, f)
-
 
 	def load(self, label):
 		self.phi = np.load('{}_data.npy'.format(label))
@@ -54,6 +45,30 @@ class TimeEvolution:
 		self.n_batches = params['n_batches']
 		self.step_size = params['step_size']
 
+	def _make_params_dict(self):
+		params = {
+			'T': self.T,
+			'dt': self.dt,
+			'dx': self.dx,
+			'X': self.X,
+			'n_batches': self.n_batches,
+			'step_size': self.step_size,
+			'size': self.size,
+			'a': self.a,
+			'k': self.k,
+			'u': self.u,
+			'phi_shift': self.phi_shift,
+			'phi_target': self.phi_target
+		}
+		return params
+
+	# ==========
+	# Evolve PDE
+	# ==========
+
+	def _modify_params():
+		pass
+
 	def evolve(self):
 		pass
 
@@ -65,6 +80,14 @@ class TimeEvolution:
 		self.n_batches = int(n_steps/self.batch_size)
 		self.evolve()
 
+
+	# ==================
+	# Plotting functions
+	# ==================
+
+	# Rescale the parameters for plotting
+	def rescale_to_standard():
+		pass
 
 	def plot_evolution(self, t_size, label):
 		t_ratio = int(np.ceil(self.n_batches/t_size))
@@ -225,11 +248,9 @@ class TimeEvolution:
 		plt.savefig('{}_final.pdf'.format(label))
 		plt.close()
 
-	def _modify_params():
-		pass
-
-	def rescale_to_standard():
-		pass
+	# ===============
+	# Initial profile
+	# ===============
 
 	def _sin_surface(self, phi_average):
 		x = np.arange(0, self.dx * (self.size), self.dx)
@@ -248,8 +269,6 @@ class TimeEvolution:
 		phi_initial = phi_average + noise_amplitude * np.random.normal(size=self.size)
 		phi_initial = self._enforce_bc(phi_initial)
 		return phi_initial
-
-
 
 	def _slow_mfold(self, phi_average):
 		q_c = np.sqrt(self.a/(2 * self.k))
@@ -272,13 +291,13 @@ class TimeEvolution:
 		return self._enforce_bc(phi_initial)
 
 
-	def _average(self, phi):
+	def _average_for_nbc(self, phi):
 		l = phi.shape[-1]
 		s = np.sum(phi[:, 1:-1], axis = -1)
 		s += 0.5 * (phi[:, 0] + phi[:, -1])
 		return s/(l-1)
 
-	def _average_vector(self, phi):
+	def _average_vector_for_nbc(self, phi):
 		l = phi.size
 		s = np.sum(phi[1:-1])
 		s += 0.5 * (phi[0] + phi[-1])
