@@ -15,18 +15,22 @@ S = np.zeros(l)
 
 for (i, u) in enumerate(rates):
     label = "X_200_u_{}".format(u)
+    print(label)
     solver = EntropyProductionFourier()
     solver.load(label)
-    solver.read_entropy(label)
-    solver.plot_entropy(label)
+
+    new_label = label + "_currents"
+    solver.read_entropy(new_label)
+    solver.plot_entropy(new_label)
+    solver.write_entropy(new_label)
     S[i] = np.sum(solver.entropy)
     us[i] = solver.u
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif', size=16)
 
-plt.plot(us, S, 'k+', markersize=8, markeredgewidth=2)
+plt.plot(np.log(us), np.log(S), 'k+', markersize=8, markeredgewidth=2)
 plt.ylabel(r'$\dot{S}$')
 plt.xlabel(r'$u$')
 plt.title(r'Total entropy production against $u$')
-plt.savefig("u_s.pdf")
+plt.savefig("u_s_log.pdf")
