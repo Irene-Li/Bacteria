@@ -154,9 +154,8 @@ class EntropyProductionFourier(EntropyProduction):
 		plt.rc('font', family='serif', size=12)
 
 		plt.subplot(2, 1, 1)
-		plt.plot(np.real(self.entropy), 'k-', label="total entropy")
+		plt.plot(np.real(self.entropy), 'k-')
 		plt.title(r"Spatial decomposition of EPR")
-		plt.legend()
 		plt.ylabel(r"$\dot{S}$")
 		plt.subplot(2, 1, 2)
 		plt.plot(self.final_phi, 'k-')
