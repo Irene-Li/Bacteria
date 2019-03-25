@@ -25,18 +25,8 @@ class FdEvolution(TimeEvolution):
 			# self.phi_initial = self._slow_mfold(initial_value)
 			self.phi_initial = self._sin_surface(initial_value)
 
-	def _modify_params(self):
-		length_ratio = 1/self.dx
-		self.dx = 1
-		self.X = self.X * length_ratio
-		self.a = (1/self.k)*self.a/length_ratio**2
-		time_ratio = length_ratio**4 * (self.k/1)
-		self.k = 1
-		self.T = self.T * time_ratio
-		self.u = self.u/time_ratio
-		self.dt = self.dt * time_ratio
-		self.step_size = self.step_size * time_ratio
-
+	def evolve(self):
+		self._evolve_pbc()
 
 	def rescale_to_standard(self):
 		time_ratio = self.a**2/self.k
@@ -50,8 +40,18 @@ class FdEvolution(TimeEvolution):
 		self.k = 1
 		self.u = self.u/time_ratio
 
-	def evolve(self):
-		self._evolve_pbc()
+	def _modify_params(self):
+		length_ratio = 1/self.dx
+		self.dx = 1
+		self.X = self.X * length_ratio
+		self.a = (1/self.k)*self.a/length_ratio**2
+		time_ratio = length_ratio**4 * (self.k/1)
+		self.k = 1
+		self.T = self.T * time_ratio
+		self.u = self.u/time_ratio
+		self.dt = self.dt * time_ratio
+		self.step_size = self.step_size * time_ratio
+
 
 	def _diff(self, phi):
 		phi_left = np.roll(phi, -1)
@@ -118,40 +118,16 @@ class FdEvolution(TimeEvolution):
 					n += 1
 				phi = r.integrate(r.t+self.dt*small_batch)
 
-
-	def _evolve_zero_g(self):
-		# only works for boundary gradient = 0
-
-		self.phi = np.zeros((self.n_batches, self.size))
-
-		small_batch = self.batch_size
-		while small_batch > 1000:
-			small_batch /= 10 # decrease the amount of time integration at each step
-
-		r = ode(self._fd_delta_phi).set_integrator('lsoda', atol=1e-10, nsteps=small_batch)
-		r.set_initial_value(self.phi_initial, 0)
-
-		n = 0
-		phi = self.phi_initial
-
-		for i in range(int((self.T/self.dt)/small_batch)):
-			if r.successful():
-				if i % int(self.batch_size/small_batch) == 0:
-					self.phi[n] = phi
-					print('iteration: {}	mean: {}'.format(n * self.batch_size, self._average_vector(self.phi[n, 2:-2])))
-					n += 1
-				phi = r.integrate(r.t+self.dt*small_batch)
-
-	def _average(self, phi):
+	def _average_for_nbc(self, phi):
 		return super()._average(phi[:, 2:-2])
 
-	def _average_vector(self, phi):
+	def _average_vector_for_nbc(self, phi):
 		return super()._average_vector(phi[2:-2])
 
 	def _compute_f(self):
 		dphi = self._diff(self.phi)
 		f = - self.a/2 * self.phi**2 + self.a/4 * self.phi**4 + self.k/2 * dphi **2
-		return self._average(f)
+		return self._average_for_nbc(f)
 
 
 	def compute_mu(self, label):
