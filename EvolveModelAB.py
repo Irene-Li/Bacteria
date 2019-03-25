@@ -107,38 +107,38 @@ class EntropyModelAB(EntropyProductionFourier):
 if __name__ == "__main__":
 
     # Label for the run
-    label = 'X_50_u_8e-4'
+    label = 'X_50_u_1e-6'
 
     # # Parameters
-    a = 0.5
-    k = 1
-    X = 50
-    dx = 0.1
-    dt = 1e-3
-    n_batches = 100
-    u = 8e-4
-    T = 10/u
-    phi_shift = 100
-    phi_target = 0
-    phi_init = 0
-    random = False
-
-    start_time = time.time()
-    solver = EvolveModelAB(a, k, u, phi_target, phi_shift)
-    solver.initialise(X, dx, T, dt, n_batches, phi_init, random=random)
-    solver.evolve()
-    solver.save(label)
-    end_time = time.time()
-    print('The simulation took: ')
-    print(end_time - start_time)
-
-    solver.rescale_to_standard()
-    solver.plot_steady_state(label, kink=0)
-
-    # solver = EntropyProductionFourier()
-    # solver.load(label)
+    # a = 0.5
+    # k = 1
+    # X = 50
+    # dx = 0.1
+    # dt = 1e-3
+    # n_batches = 100
+    # u = 8e-4
+    # T = 10/u
+    # phi_shift = 100
+    # phi_target = 0
+    # phi_init = 0
+    # random = False
     #
-    # # solver.read_entropy(label)
+    # start_time = time.time()
+    # solver = EvolveModelAB(a, k, u, phi_target, phi_shift)
+    # solver.initialise(X, dx, T, dt, n_batches, phi_init, random=random)
+    # solver.evolve()
+    # solver.save(label)
+    # end_time = time.time()
+    # print('The simulation took: ')
+    # print(end_time - start_time)
     #
-    # solver.entropy_with_modelAB_currents()
-    # solver.plot_entropy_from_modelAB_currents(label)
+    # solver.rescale_to_standard()
+    # solver.plot_steady_state(label, kink=0)
+
+    solver = EntropyProductionFourier()
+    solver.load(label)
+
+    # solver.read_entropy(label)
+
+    solver.entropy_with_modelAB_currents()
+    solver.plot_entropy(label)
