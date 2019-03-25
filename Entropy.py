@@ -10,28 +10,13 @@ from TimeEvolution import TimeEvolution
 
 class EntropyProduction(TimeEvolution):
 
+	# ============
+	# IO functions
+	# ============
+
 	def load(self, label):
 		super(EntropyProduction, self).load(label)
 		self.final_phi = self.phi[-2]
-
-	def calculate_entropy():
-		pass
-
-
-	def plot_entropy(self, label):
-		plt.rc('text', usetex=True)
-		plt.rc('font', family='serif', size=12)
-
-		plt.subplot(2, 1, 1)
-		plt.plot(np.real(self.entropy), 'k-')
-		plt.title(r"The spatial decomposition of the entropy production", y=1.1)
-		plt.ylabel(r"$\dot{S}$")
-		plt.subplot(2, 1, 2)
-		plt.plot(self.final_phi, 'k-')
-		plt.ylabel(r"$\phi$")
-		plt.xlabel(r"$x$")
-		plt.savefig("{}_entropy.pdf".format(label))
-		plt.close()
 
 	def write_entropy(self, label):
 		np.save("{}_entropy.npy".format(label), self.entropy)
@@ -44,6 +29,39 @@ class EntropyProduction(TimeEvolution):
 			self.calculate_entropy()
 			self.write_entropy(label)
 
+
+	# =============
+	# Main function
+	# =============
+
+	def calculate_entropy():
+		# to be implemented in subclasses
+		pass
+
+	# ==================
+	# Plotting functions
+	# ==================
+
+	def plot_entropy(self, label):
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif', size=12)
+
+		x = np.arange(0, (self.size)* self.dx, self.dx)
+
+		plt.subplot(2, 1, 1)
+		plt.plot(x, np.real(self.entropy), 'k-')
+		plt.title(r"The spatial decomposition of the entropy production", y=1.1)
+		plt.ylabel(r"$\dot{S}$")
+		plt.subplot(2, 1, 2)
+		plt.plot(x, self.final_phi, 'k-')
+		plt.ylabel(r"$\phi$")
+		plt.xlabel(r"$x$")
+		plt.savefig("{}_entropy.pdf".format(label))
+		plt.close()
+
+	# ================
+	# Helper functions
+	# ================
 
 	def _make_correlation_matrix(self):
 		self.correlation_matrix = sl.solve_lyapunov(self.first_order_matrix, (-self.noise_matrix).todense())
@@ -147,22 +165,6 @@ class EntropyProductionFourier(EntropyProduction):
 		self.entropy_from_model_B_current = J_1*J_1
 		self.entropy_from_model_A_current = J_2*J_2/M_2
 		self.entropy = self.entropy_from_model_A_current + self.entropy_from_model_B_current
-
-	def plot_entropy_from_modelAB_currents(self, label):
-
-		plt.rc('text', usetex=True)
-		plt.rc('font', family='serif', size=12)
-
-		plt.subplot(2, 1, 1)
-		plt.plot(np.real(self.entropy), 'k-')
-		plt.title(r"Spatial decomposition of EPR")
-		plt.ylabel(r"$\dot{S}$")
-		plt.subplot(2, 1, 2)
-		plt.plot(self.final_phi, 'k-')
-		plt.ylabel(r"$\phi$")
-		plt.xlabel(r"$x$")
-		plt.savefig("{}_entropy_modelAB_current.pdf".format(label))
-		plt.close()
 
 	def _calculate_entropy_with_jac(self):
 		C = sp.csr_matrix(self.correlation_matrix)
