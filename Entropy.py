@@ -150,7 +150,7 @@ class EntropyProductionFourier(EntropyProduction):
 		plt.legend()
 		plt.show()
 
-	def entropy_with_modelAB_currents(self):
+	def entropy_with_modelAB(self):
 		self._make_laplacian_matrix()
 		self._make_gradient_matrix()
 		final_phi_fourier = fft(self.final_phi)
@@ -319,7 +319,7 @@ if __name__ == "__main__":
 	# solver.read_entropy(label)
 
 	# solver.compare_entropy()
-	# solver.entropy_with_modelAB_currents()
+	# solver.entropy_with_modelAB()
 	# solver.plot_entropy_from_modelAB_currents(label)
 
 	# solver.calculate_entropy()
