@@ -89,20 +89,57 @@ class EvolveModelAB(FdEvolution):
 
 class EntropyModelAB(EntropyProductionFourier):
 
-    def entropy_with_modelAB_currents(self):
+    def load(self, label):
+        super().load(label)
+        self.M1 = 1
+        self.M2 = self.u * self.phi_shift/2
+
+    def entropy_with_modelAB(self, option="currents"):
         self._make_laplacian_matrix()
-        self._make_gradient_matrix()
         final_phi_fourier = fft(self.final_phi)
         final_phi_cube_fourier = fft(self.final_phi**3)
-        mu1 = self.a*(-final_phi_fourier + final_phi_cube_fourier) - self.k*self._laplacian_fourier*final_phi_fourier
-        J_1 = self._gradient_fourier * mu1
+        self._mu1_fourier = self.a*(-final_phi_fourier + final_phi_cube_fourier)
+        self._mu1_fourier -= self.k*self._laplacian_fourier*final_phi_fourier
+        self._mu2_spatial = (2 * self.final_phi + self.a * self.final_phi**3)
+
+        if option=="currents":
+            self._entropy_with_modelAB_currents()
+        elif option=="phi1_phi2":
+            self._entropy_with_phi1_phi2()
+        elif option=="psi":
+            self._entropy_with_psi()
+        else:
+            print("Not a valid option")
+
+    def _entropy_with_modelAB_currents(self):
+        self._make_gradient_matrix()
+        J_1 = self.M1 * self._gradient_fourier * self._mu1_fourier
         J_1 = ifft(J_1)
+        J_2 = self.M2 * self._mu2_spatial
 
-        J_2 = 2 * self.final_phi + self.a * self.final_phi**3
+        entropy_from_model_B = J_1*J_1/self.M1
+        entropy_from_model_A= J_2*J_2/self.M2
+        self.entropy = entropy_from_model_A + entropy_from_model_B
 
-        self.entropy_from_model_B_current = J_1*J_1/self.M1
-        self.entropy_from_model_A_current = J_2*J_2/self.M2
-        self.entropy = self.entropy_from_model_A_current + self.entropy_from_model_B_current
+
+    def _entropy_with_phi1_phi2(self):
+        dtphi1 = self.M1 * ifft(self._laplacian_fourier * self._mu1_fourier)
+        mu1_spatial = ifft(self._mu1_fourier)
+        entropy_from_model_B = - dtphi1 * mu1_spatial
+        entropy_from_model_A = self.M2 * self._mu2_spatial**2
+        self.entropy = entropy_from_model_B + entropy_from_model_A
+
+
+    def _entropy_with_psi(self):
+        dtpsi_fourier = self.M1 * self._laplacian_fourier* self._mu1_fourier
+        dtpsi_fourier += self.M2 * fft(self._mu2_spatial)
+        noise_matrix = - self.M1*self._laplacian_fourier + self.M2
+        dtpsi_spatial = ifft(dtpsi_fourier)
+        other_part = dtpsi_fourier/noise_matrix
+        other_part = ifft(other_part)
+        self.entropy = other_part * dtpsi_spatial
+
+
 
 if __name__ == "__main__":
 
@@ -135,10 +172,11 @@ if __name__ == "__main__":
     # solver.rescale_to_standard()
     # solver.plot_steady_state(label, kink=0)
 
-    solver = EntropyProductionFourier()
+    solver = EntropyModelAB()
     solver.load(label)
 
     # solver.read_entropy(label)
+    opt = 'currents'
 
-    solver.entropy_with_modelAB_currents()
-    solver.plot_entropy(label)
+    solver.entropy_with_modelAB(option=opt)
+    solver.plot_entropy(label+'_'+opt)
