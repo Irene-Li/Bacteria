@@ -89,13 +89,15 @@ class TimeEvolution:
 	def rescale_to_standard():
 		pass
 
-	def plot_evolution(self, t_size, label):
+	def plot_evolution(self, t_size, label, grid_size=2):
 		t_ratio = int(np.ceil(self.n_batches/t_size))
 		t_grid_size = self.step_size * t_ratio
-		phi_plot = self.phi[::t_ratio, 2:-2:2]
+		grid_size = int(grid_size)
+		phi_plot = self.phi[::t_ratio, ::grid_size]
 
-		ymesh, xmesh = np.mgrid[slice(0, self.T, t_grid_size),
-								slice(0, self.X + self.dx, self.dx*2)]
+		ymesh, xmesh = np.mgrid[slice(0, self.T+self.step_size, t_grid_size),
+								slice(0, self.X-self.dx, self.dx*grid_size)]
+
 
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif', size=15)
@@ -254,8 +256,8 @@ class TimeEvolution:
 
 	def _sin_surface(self, phi_average):
 		x = np.arange(0, self.dx * (self.size), self.dx)
-		phi_initial = phi_average + 0.2*np.cos(2*np.pi*x/self.X)
-		phi_initial += 0.1*np.cos(4*np.pi*x/self.X) + 0.1*np.cos(8*np.pi*x/self.X)
+		phi_initial = phi_average + 1*np.cos(2*np.pi*x/self.X)
+		# phi_initial += 0.1*np.cos(4*np.pi*x/self.X) + 0.1*np.cos(8*np.pi*x/self.X)
 		return self._enforce_bc(phi_initial)
 
 	def _make_shifted_interface(self, phi_average):
