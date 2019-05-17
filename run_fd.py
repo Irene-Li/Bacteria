@@ -3,16 +3,16 @@ import numpy as np
 from FdEvolution import *
 
 # the label for this run
-label = 'X_50_u_1e-6'
+label = 'X_100_u_1e-6_sin_init'
 
 # parameters of the differential equation
 a = 0.2
 k = 1
 
 # simulation parameters
-X = 50
+X = 100
 dx = 0.1
-dt = 1e-3
+dt = 1e-4
 n_batches = 100
 
 # Evolve
@@ -30,4 +30,4 @@ solver.evolve()
 solver.save(label)
 end_time = time.time()
 print('The simulation took: ')
-print(end_time - start_time
+print(end_time - start_time)
