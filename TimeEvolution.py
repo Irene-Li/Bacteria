@@ -14,18 +14,27 @@ class TimeEvolution:
 		self.phi_shift = phi_shift
 		self.phi_target = phi_target
 
-
-
-	# ============================
-	# Saving and loading from file
-	# ============================
-
 	def save(self, label):
 		np.save("{}_data.npy".format(label), self.phi)
-		params = self._make_params_dict()
+
+		params = {
+			'T': self.T,
+			'dt': self.dt,
+			'dx': self.dx,
+			'X': self.X,
+			'n_batches': self.n_batches,
+			'step_size': self.step_size,
+			'size': self.size,
+			'a': self.a,
+			'k': self.k,
+			'u': self.u,
+			'phi_shift': self.phi_shift,
+			'phi_target': self.phi_target
+		}
 
 		with open('{}_params.json'.format(label), 'w') as f:
 			json.dump(params, f)
+
 
 	def load(self, label):
 		self.phi = np.load('{}_data.npy'.format(label))
@@ -45,30 +54,6 @@ class TimeEvolution:
 		self.n_batches = params['n_batches']
 		self.step_size = params['step_size']
 
-	def _make_params_dict(self):
-		params = {
-			'T': self.T,
-			'dt': self.dt,
-			'dx': self.dx,
-			'X': self.X,
-			'n_batches': self.n_batches,
-			'step_size': self.step_size,
-			'size': self.size,
-			'a': self.a,
-			'k': self.k,
-			'u': self.u,
-			'phi_shift': self.phi_shift,
-			'phi_target': self.phi_target
-		}
-		return params
-
-	# ==========
-	# Evolve PDE
-	# ==========
-
-	def _modify_params():
-		pass
-
 	def evolve(self):
 		pass
 
@@ -80,30 +65,28 @@ class TimeEvolution:
 		self.n_batches = int(n_steps/self.batch_size)
 		self.evolve()
 
+	def count(self):
+		phi_final = self.phi[-2]
+		bool_array = (phi_final>self.phi_target)
+		bool_array = np.abs(bool_array - np.roll(bool_array, -1))
+		return np.sum(bool_array)/2
 
-	# ==================
-	# Plotting functions
-	# ==================
 
-	# Rescale the parameters for plotting
-	def rescale_to_standard():
-		pass
+	def plot_evolution(self, t_size, x_size, label):
+		t_grid_size = int(np.ceil(self.n_batches/t_size))
+		x_grid_size = int(np.ceil(self.size/x_size))
+		phi_plot = self.phi[::t_grid_size, ::x_grid_size]
 
-	def plot_evolution(self, t_size, label, grid_size=2):
-		t_ratio = int(np.ceil(self.n_batches/t_size))
-		t_grid_size = self.step_size * t_ratio
-		grid_size = int(grid_size)
-		phi_plot = self.phi[::t_ratio, ::grid_size]
-
-		ymesh, xmesh = np.mgrid[slice(0, self.T+self.step_size, t_grid_size),
-								slice(0, self.X-self.dx, self.dx*grid_size)]
-
+		T = t_grid_size * self.step_size * phi_plot.shape[0]
+		X = x_grid_size * self.dx * phi_plot.shape[1]
+		ymesh, xmesh = np.mgrid[slice(0, T, self.step_size*t_grid_size),
+								slice(0, X, self.dx*x_grid_size)]
 
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif', size=15)
 
 		plt.figure(figsize=(10, 10))
-		plt.pcolor(xmesh, ymesh, phi_plot, cmap='plasma', edgecolors='face', linestyle='None', alpha=1)
+		plt.pcolor(xmesh, ymesh, phi_plot, cmap='plasma', edgecolors='face', alpha=1)
 		plt.colorbar()
 		plt.xlabel(r'x')
 		plt.ylabel(r't')
@@ -250,14 +233,15 @@ class TimeEvolution:
 		plt.savefig('{}_final.pdf'.format(label))
 		plt.close()
 
-	# ===============
-	# Initial profile
-	# ===============
+	def _modify_params():
+		pass
+
+	def rescale_to_standard():
+		pass
 
 	def _sin_surface(self, phi_average):
 		x = np.arange(0, self.dx * (self.size), self.dx)
-		phi_initial = phi_average + 1*np.cos(2*np.pi*x/self.X)
-		# phi_initial += 0.1*np.cos(4*np.pi*x/self.X) + 0.1*np.cos(8*np.pi*x/self.X)
+		phi_initial = phi_average + 0.6*np.cos(2*np.pi*x/self.X)
 		return self._enforce_bc(phi_initial)
 
 	def _make_shifted_interface(self, phi_average):
@@ -271,6 +255,8 @@ class TimeEvolution:
 		phi_initial = phi_average + noise_amplitude * np.random.normal(size=self.size)
 		phi_initial = self._enforce_bc(phi_initial)
 		return phi_initial
+
+
 
 	def _slow_mfold(self, phi_average):
 		q_c = np.sqrt(self.a/(2 * self.k))
@@ -293,13 +279,13 @@ class TimeEvolution:
 		return self._enforce_bc(phi_initial)
 
 
-	def _average_for_nbc(self, phi):
+	def _average(self, phi):
 		l = phi.shape[-1]
 		s = np.sum(phi[:, 1:-1], axis = -1)
 		s += 0.5 * (phi[:, 0] + phi[:, -1])
 		return s/(l-1)
 
-	def _average_vector_for_nbc(self, phi):
+	def _average_vector(self, phi):
 		l = phi.size
 		s = np.sum(phi[1:-1])
 		s += 0.5 * (phi[0] + phi[-1])
