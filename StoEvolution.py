@@ -157,6 +157,8 @@ class StoEvolution(FdEvolution):
 		dW = np.random.normal(0.0, np.sqrt(self.dt), self.size)
 		noise += np.sqrt(2*self.M2)*dW
 
+		noise *= np.sqrt(self.epsilon)
+
 		return noise
 
 	def _random_init(self, initial_value):

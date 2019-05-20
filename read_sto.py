@@ -1,9 +1,9 @@
 import numpy as np
 from StoEvolution import *
 
-labels = ['sto_dt_0']
-t_size = 50
-x_size = 100
+labels = ['sto_dt_1e-05']
+t_size = 100
+x_size = 200
 
 
 for label in labels:
