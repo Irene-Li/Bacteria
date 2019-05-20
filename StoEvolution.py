@@ -13,8 +13,6 @@ class StoEvolution(FdEvolution):
 	def __init__(self, epsilon=None, a=None, k=None, u=None, phi_target=None, phi_shift=None):
 		super().__init__(a, k, u, phi_target, phi_shift)
 		self.epsilon = epsilon
-		self.M1 = 1
-		self.M2 = u*(phi_shift+phi_target/2)
 
 	def initialise(self, X, dx, T, dt, n_batches, initial_value, flat=True):
 		self.dx = dx
@@ -25,6 +23,8 @@ class StoEvolution(FdEvolution):
 		self.n_batches = int(n_batches)
 		self.step_size = T/(self.n_batches-1)
 		self.batch_size = int(self.step_size/self.dt)
+		self.M1 = 1
+		self.M2 = self.u*(self.phi_shift+self.phi_target/2)
 		self._modify_params()
 		self._make_gradient_matrix()
 
@@ -152,6 +152,7 @@ class StoEvolution(FdEvolution):
 		dW = np.random.normal(0.0, np.sqrt(self.dt), self.size)
 		dW_fourier = fft(dW)
 		noise = np.sqrt(2*self.M1)*ifft(self._gradient_fourier*dW_fourier)
+
 		# noise of the non-conservative dynamics
 		dW = np.random.normal(0.0, np.sqrt(self.dt), self.size)
 		noise += np.sqrt(2*self.M2)*dW

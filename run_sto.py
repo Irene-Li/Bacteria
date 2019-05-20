@@ -5,16 +5,16 @@ from StoEvolution import *
 epsilon = 1e-4
 a = 0.2
 k = 1
-u = 0
-phi_t = -0.3
-phi_shift = 1.05
+u = 1e-5
+phi_t = 0
+phi_shift = 100
 
 X = 50
 dx = 0.1
 dt = 1e-3
-T = dt * 5e2
-n_batches = 50
-initial_value = -0.6
+T = dt * 1e3
+n_batches = 100
+initial_value = 0
 flat = True
 # n = 5
 
