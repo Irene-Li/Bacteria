@@ -4,6 +4,7 @@ from scipy.integrate import ode
 from scipy.fftpack import rfft, rfftfreq
 from TimeEvolution import TimeEvolution
 from FdEvolution import FdEvolution
+from scipy.fftpack import fft, ifft, fftfreq
 import json
 
 
@@ -12,6 +13,8 @@ class StoEvolution(FdEvolution):
 	def __init__(self, epsilon=None, a=None, k=None, u=None, phi_target=None, phi_shift=None):
 		super().__init__(a, k, u, phi_target, phi_shift)
 		self.epsilon = epsilon
+		self.M1 = 1
+		self.M2 = u*(phi_shift+phi_target/2)
 
 	def initialise(self, X, dx, T, dt, n_batches, initial_value, flat=True):
 		self.dx = dx
@@ -23,9 +26,7 @@ class StoEvolution(FdEvolution):
 		self.step_size = T/(self.n_batches-1)
 		self.batch_size = int(self.step_size/self.dt)
 		self._modify_params()
-		self.noise_matrix = self._make_noise_matrix()
-		self.M1 = 1
-		self.M2 = self.u*self.phi_shift**2*(2+self.phi_target*self.phi_shift)/2
+		self._make_gradient_matrix()
 
 		if flat:
 			self.phi_initial = np.zeros((self.size))
@@ -83,18 +84,7 @@ class StoEvolution(FdEvolution):
 		self.load_params(label)
 		self.load_phi(label)
 
-	def evolve_euler(self):
-		import sdeint
-
-		F = lambda phi, t: self.delta(t, phi)
-		G = lambda phi, t: self.noise_matrix
-		tspan = np.arange(0, self.T, self.dt)
-		self.phi = sdeint.itoEuler(F, G, self.phi_initial, tspan)
-		return self.phi
-
 	def evolve(self, verbose=True):
-		self.noise_matrix = self._make_noise_matrix()
-
 		self.phi = np.zeros((self.n_batches, self.size))
 		r = ode(self._delta).set_integrator('lsoda', atol=1e-8)
 		r.set_initial_value(self.phi_initial, 0)
@@ -105,67 +95,67 @@ class StoEvolution(FdEvolution):
 				if i % self.batch_size == 0:
 					self.phi[n] = r.y
 					if verbose:
-						print('iteration: {}	mean: {}'.format(i, self._average_vector(r.y[2:-2])))
+						print('iteration: {}	mean: {}'.format(i, np.mean(r.y)))
 					n += 1
 				r.set_initial_value(r.y + self._noisy_delta(), r.t)
 				r.integrate(r.t+self.dt)
-
-
 		return self.phi
 
 	def _modify_params(self):
-		length_ratio = 1/self.dx
-		self.dx = 1
-		self.X = self.X * length_ratio
-		self.a = (1/self.k)*self.a/length_ratio**2
-		time_ratio = length_ratio**4 * (self.k/1)
-		self.k = 1
-		self.T = self.T * time_ratio
-		self.u = self.u/time_ratio
-		self.dt = self.dt * time_ratio
-		self.step_size = self.step_size * time_ratio
-		self.M = length_ratio**2 * self.M/time_ratio
+		length_ratio = self.dx
+		time_ratio = length_ratio**4/self.k #such that M1*k=1
 
+		self.dx = 1
+		self.X /= length_ratio
+		self.T /= time_ratio
+		self.dt /= time_ratio
+		self.step_size /= time_ratio
+
+		self.k /= length_ratio**2
+		self.M1 *= time_ratio/length_ratio**2
+		self.u *= time_ratio
+		self.M2 *= time_ratio
+		self.epsilon /= length_ratio
+
+	def _print_params(self):
+		print('X', self.X, '\n',
+		'dx', self.dx, '\n',
+		'T', self.T, '\n',
+		'dt', self.dt, '\n',
+		'M1', self.M1, '\n',
+		'M2', self.M2, '\n',
+		'a', self.a, '\n',
+		'k', self.k, '\n',
+		'u', self.u, '\n',
+		'epsilon', self.epsilon, '\n'
+		)
 
 	def rescale_to_standard(self):
-		time_ratio = self.a**2/self.k
-		space_ratio = np.sqrt(self.a/self.k)
-		self.dx = space_ratio * self.dx
-		self.X = space_ratio * self.X
-		self.T = time_ratio * self.T
-		self.dt = time_ratio * self.dt
-		self.step_size = time_ratio * self.step_size
-		self.a = 1
-		self.k = 1
-		self.u = self.u/time_ratio
-		self.M = length_ratio**2 * self.M/time_ratio
+		pass
 
 
 	def _delta(self, t, phi):
 		mu = self.a * (- phi + phi**3) - self.k * self._laplacian(phi)
 		birth_death = - self.u * (phi + self.phi_shift) * (phi - self.phi_target)
-		dphidt = self._laplacian(mu) + birth_death
-		return self._enforce_bc(dphidt)
+		dphidt = self.M1 * self._laplacian(mu) + birth_death
+		return dphidt
 
-	def _make_noise_matrix(self):
-		unit_matrix = np.identity(self.size)
-		noise = np.roll(unit_matrix, 1, axis=-1) - np.roll(unit_matrix, -1, axis=-1)
-		noise[:4, :] = 0
-		noise[-4:, :] = 0
-		noise[0, :] = noise[4, :]
-		noise[-1, :] = noise[-5, :]
-		noise[2, 3] = 2
-		noise[-3, -4] = -2
-		noise[1, 4] = 1
-		noise[-2, -5] = -1
-		noise[3, 4] = 1
-		noise[-4, -5] = -1
-
-		return np.sqrt(2 * self.M)/(2 * self.dx) * noise
+	def _make_gradient_matrix(self):
+		x = np.arange(self.size)
+		laplacian_fourier = - 2 * (1 - np.cos(2 * np.pi * x/self.size))
+		self._gradient_fourier = np.sqrt(- laplacian_fourier)*(-1j)
+		n = int(self.size/2)+1
+		self._gradient_fourier[n:] *= (-1)
 
 	def _noisy_delta(self):
-		dW = np.random.normal(0.0, np.sqrt(self.dt), (self.size))
-		noise = np.matmul(self.noise_matrix, dW)
+		# noise of the conservative dynamics
+		dW = np.random.normal(0.0, np.sqrt(self.dt), self.size)
+		dW_fourier = fft(dW)
+		noise = np.sqrt(2*self.M1)*ifft(self._gradient_fourier*dW_fourier)
+		# noise of the non-conservative dynamics
+		dW = np.random.normal(0.0, np.sqrt(self.dt), self.size)
+		noise += np.sqrt(2*self.M2)*dW
+
 		return noise
 
 	def _random_init(self, initial_value):
