@@ -1,11 +1,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.integrate import ode
-from scipy.fftpack import rfft, rfftfreq
+from scipy.fftpack import irfft, rfft, fft
 from TimeEvolution import TimeEvolution
 from FdEvolution import FdEvolution
-from scipy.fftpack import fft, ifft, fftfreq
 import json
+import scipy.sparse as sp
 
 
 class StoEvolution(FdEvolution):
@@ -117,7 +117,7 @@ class StoEvolution(FdEvolution):
 		self.M2 *= time_ratio
 		self.epsilon /= length_ratio
 
-	def _print_params(self):
+	def print_params(self):
 		print('X', self.X, '\n',
 		'dx', self.dx, '\n',
 		'T', self.T, '\n',
@@ -141,25 +141,20 @@ class StoEvolution(FdEvolution):
 		return dphidt
 
 	def _make_gradient_matrix(self):
-		x = np.arange(self.size)
+		n = int(self.size/2)
+		x = np.arange(n)
 		laplacian_fourier = - 2 * (1 - np.cos(2 * np.pi * x/self.size))
-		self._gradient_fourier = np.sqrt(- laplacian_fourier)*(-1j)
-		n = int(self.size/2)+1
-		self._gradient_fourier[n:] *= (-1)
+		self._gradient_fourier = np.sqrt(- laplacian_fourier)
 
 	def _noisy_delta(self):
 		# noise of the conservative dynamics
-		dW = np.random.normal(0.0, np.sqrt(self.dt), self.size)
-		dW_fourier = fft(dW)
-		noise = np.sqrt(2*self.M1)*ifft(self._gradient_fourier*dW_fourier)
-
-		# noise of the non-conservative dynamics
-		dW = np.random.normal(0.0, np.sqrt(self.dt), self.size)
-		noise += np.sqrt(2*self.M2)*dW
-
-		noise *= np.sqrt(self.epsilon)
-
-		return noise
+		dW = np.random.normal(0.0, np.sqrt(self.epsilon*self.dt*self.size), self.size)
+		dW[0] *= np.sqrt(2)
+		dW[-1] *= np.sqrt(2)
+		noise_fourier = np.sqrt(self.M2)*dW
+		noise_fourier[1:self.size-1:2] -= np.sqrt(self.M1)*self._gradient_fourier[1:]*dW[2:self.size-1:2]
+		noise_fourier[2:self.size-1:2] =+ np.sqrt(self.M1)*self._gradient_fourier[1:]*dW[1:self.size-1:2]
+		return irfft(noise_fourier)
 
 	def _random_init(self, initial_value):
 		phi_initial = initial_value + np.zeros((self.size))
@@ -179,7 +174,6 @@ class StoEvolution(FdEvolution):
 			self.evolve(verbose=False)
 			self.phi_trajs[i] = self.phi
 			print('trajectory {} completed'.format(i))
-
 
 	def save_trajs(self, label):
 		np.save("{}_trajs.npy".format(label), self.phi_trajs)
