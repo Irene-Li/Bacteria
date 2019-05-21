@@ -16,4 +16,10 @@ for (i, u)in enumerate(rates):
 			# solver.plot_evolution(100, 100, label)
 			n[k, j, i] = solver.count()
 
-length = solver.X/n 
+length = solver.X/n
+for (k, length) in enumerate([100, 200, 300]):
+	for (j, init) in enumerate(['flat', 'sin']):
+		plt.plot(n[k, j], rates, label='{}_X_{}')
+plt.legend() 
+plt.savefig('pattern.pdf')
+plt.close()
