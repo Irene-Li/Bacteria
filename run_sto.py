@@ -12,13 +12,13 @@ phi_shift = 100
 X = 50
 dx = 0.1
 dt = 1e-3
-T = 1
+T = 100
 n_batches = 100
 initial_value = 0
 flat = True
 
-for dt in [1e-3, 1e-4, 1e-5, 1e-6]:
-	label = 'sto_dt_{}'.format(dt)
+for dt in [1e-3, 1e-4]:
+	label = 'sto_dt_{}_long'.format(dt)
 
 	start_time = time.time()
 	solver = StoEvolution(epsilon, a, k, u, phi_t, phi_shift)
