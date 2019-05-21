@@ -9,21 +9,21 @@ u = 1e-5
 phi_t = 0
 phi_shift = 100
 
-X = 40
-dx = 0.2
-T = 1000
+X = 100
+dx = 1
+T = 1e2
 n_batches = 100
 initial_value = 0
-flat = True
+flat = True 
 
-for dt in [1e-4]:
+for dt in [1e-2]:
 	label = 'sto_dt_{}_Long'.format(dt)
 
 	start_time = time.time()
 	solver = StoEvolution(epsilon, a, k, u, phi_t, phi_shift)
 	solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
 	solver.save_params(label)
-	solver._print_params()
+	solver.print_params()
 	solver.evolve(verbose=True)
 	solver.save_phi(label)
 	end_time = time.time()
