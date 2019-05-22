@@ -2,7 +2,7 @@ import time
 import numpy as np
 from StoEvolution import *
 
-epsilon = 1e-4
+epsilon = 1e-2
 a = 0.2
 k = 1
 u = 1e-5
@@ -11,13 +11,14 @@ phi_shift = 100
 
 X = 100
 dx = 1
-T = 1e2
+T = 1e4
+dt = 1e-3
 n_batches = 100
 initial_value = 0
-flat = True 
+flat = False
 
-for dt in [1e-2]:
-	label = 'sto_dt_{}_Long'.format(dt)
+for epsilon in [1e-2, 1e-3, 1e-4]:
+	label = 'sto_ep_{}_sin'.format(dt)
 
 	start_time = time.time()
 	solver = StoEvolution(epsilon, a, k, u, phi_t, phi_shift)

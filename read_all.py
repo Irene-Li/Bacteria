@@ -2,8 +2,8 @@ import time
 import numpy as np
 from StoEvolution import *
 
-for dt in [1e-2]:
-	label = 'sto_dt_{}_Long'.format(dt)
+for dt in [1e-2, 1e-3, 1e-4]:
+	label = 'sto_dt_{}_sin'.format(dt)
 	solver = StoEvolution()
 	solver.load(label)
 	solver.rescale_to_standard()
