@@ -153,7 +153,7 @@ class StoEvolution(FdEvolution):
 		dW[-1] *= np.sqrt(2)
 		noise_fourier = np.sqrt(self.M2)*dW
 		noise_fourier[1:self.size-1:2] -= np.sqrt(self.M1)*self._gradient_fourier[1:]*dW[2:self.size-1:2]
-		noise_fourier[2:self.size-1:2] =+ np.sqrt(self.M1)*self._gradient_fourier[1:]*dW[1:self.size-1:2]
+		noise_fourier[2:self.size-1:2] += np.sqrt(self.M1)*self._gradient_fourier[1:]*dW[1:self.size-1:2]
 		return irfft(noise_fourier)
 
 	def _random_init(self, initial_value):
