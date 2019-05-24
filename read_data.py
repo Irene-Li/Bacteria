@@ -2,7 +2,7 @@ import time
 import numpy as np
 from FdEvolution import *
 
-label = 'X_100_u_1e-6_sin_init'
+label = 'u_1e-06'
 
 solver = FdEvolution()
 solver.load(label)
@@ -13,7 +13,9 @@ solver.rescale_to_standard()
 # # solver.plot_phi_bar_dot(label)
 
 # solver.plot_current(label)
-solver.plot_evolution(100, label, grid_size=5)
+
+solver.phi = solver.phi[:100]
+solver.plot_evolution(100, 200, label)
 
 
 # solver.plot_phase_space(label)
