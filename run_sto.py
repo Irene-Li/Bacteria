@@ -11,14 +11,14 @@ phi_shift = 100
 
 X = 100
 dx = 1
-T = 1e4
+T = 1e5
 dt = 1e-3
 n_batches = 100
 initial_value = 0
-flat = False
+flat = True
 
-for epsilon in [1e-2, 1e-3, 1e-4]:
-	label = 'sto_ep_{}_sin'.format(dt)
+for epsilon in [1e-1, 1e-2]:
+	label = 'sto_ep_{}_flat_long'.format(epsilon)
 
 	start_time = time.time()
 	solver = StoEvolution(epsilon, a, k, u, phi_t, phi_shift)
