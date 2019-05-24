@@ -50,12 +50,12 @@ class EntropyProduction(TimeEvolution):
 
 		plt.subplot(2, 1, 1)
 		plt.plot(x, np.real(self.entropy), 'k-')
-		plt.title(r"The spatial decomposition of the entropy production", y=1.1)
 		plt.ylabel(r"$\dot{S}$")
 		plt.subplot(2, 1, 2)
 		plt.plot(x, self.final_phi, 'k-')
 		plt.ylabel(r"$\phi$")
 		plt.xlabel(r"$x$")
+		plt.tight_layout()
 		plt.savefig("{}_entropy.pdf".format(label))
 		plt.close()
 
@@ -293,7 +293,7 @@ class EntropyProductionFourier(EntropyProduction):
 		return matrix_ifft
 
 	def _make_noise_matrix_quad_bd(self):
-		diag = -2*self._laplacian_fourier + self.u*(self.phi_shift+self.phi_target)
+		diag = -2*self._laplacian_fourier + self.u*(2*self.phi_shift+self.phi_target)
 		self.noise_matrix = sp.diags([diag], [0], shape=(self.size, self.size))
 
 	def _make_noise_matrix_lin_bd(self):
@@ -311,7 +311,7 @@ class EntropyProductionFourier(EntropyProduction):
 
 if __name__ == "__main__":
 
-	label = 'X_200_u_1e-06'
+	label = 'X_100_u_1e-6_random_init'
 
 	solver = EntropyProductionFourier()
 	solver.load(label)
@@ -323,7 +323,6 @@ if __name__ == "__main__":
 	# solver.plot_entropy_from_modelAB_currents(label)
 
 	# solver.calculate_entropy()
-	new_label = label + "_currents"
-	solver.read_entropy(new_label)
-	solver.plot_entropy(new_label)
-	solver.write_entropy(new_label)
+	solver.read_entropy(label)
+	solver.plot_entropy(label)
+	solver.write_entropy(label)
