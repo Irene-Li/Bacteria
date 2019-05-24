@@ -73,8 +73,9 @@ class TimeEvolution:
 
 
 	def plot_evolution(self, t_size, x_size, label):
-		t_grid_size = int(np.ceil(self.n_batches/t_size))
-		x_grid_size = int(np.ceil(self.size/x_size))
+		(t_size_old, x_size_old) = self.phi.shape
+		t_grid_size = int(np.ceil(t_size_old/t_size))
+		x_grid_size = int(np.ceil(x_size_old/x_size))
 		phi_plot = self.phi[::t_grid_size, ::x_grid_size]
 
 		T = t_grid_size * self.step_size * phi_plot.shape[0]
@@ -90,7 +91,7 @@ class TimeEvolution:
 		plt.colorbar()
 		plt.xlabel(r'x')
 		plt.ylabel(r't')
-		plt.title(r'Spacetime plot for u = {:.1E}, $\phi_0$ = {:.2f}, $\phi_t$ = {:.2f}'.format(self.u, self.phi_shift, self.phi_target))
+		plt.title(r'Spacetime plot')
 		plt.tight_layout()
 		plt.savefig('{}_evolution.pdf'.format(label))
 		plt.close()
