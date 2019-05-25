@@ -86,6 +86,7 @@ class StoEvolution(FdEvolution):
 
 	def evolve(self, verbose=True):
 		self.phi = np.zeros((self.n_batches, self.size))
+		self._make_laplacian_matrix()
 		r = ode(self._delta).set_integrator('lsoda', atol=1e-8)
 		r.set_initial_value(self.phi_initial, 0)
 
