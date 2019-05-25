@@ -59,9 +59,7 @@ class FdEvolution(TimeEvolution):
 		return (phi_right - phi_left)/(self.dx * 2)
 
 	def _laplacian(self, phi):
-		phi_left = np.roll(phi, -1)
-		phi_right = np.roll(phi, 1)
-		return (phi_right + phi_left - 2 * phi)/((self.dx)**2)
+		return self._laplacian_sparse.dot(phi)
 
 	def _enforce_bc(self, phi):
 		# phi[1] = phi[3]

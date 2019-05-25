@@ -11,14 +11,14 @@ phi_shift = 100
 
 X = 100
 dx = 1
-T = 1e5
-dt = 1e-3
+T = 1e2
+dt = 1e-4
 n_batches = 100
 initial_value = 0
 flat = True
 
-for epsilon in [1e-1, 1e-2]:
-	label = 'sto_ep_{}_flat_long'.format(epsilon)
+for epsilon in [1e-1]:
+	label = 'sto_ep_{}_test'.format(epsilon)
 
 	start_time = time.time()
 	solver = StoEvolution(epsilon, a, k, u, phi_t, phi_shift)
@@ -26,6 +26,7 @@ for epsilon in [1e-1, 1e-2]:
 	solver.save_params(label)
 	solver.print_params()
 	solver.evolve(verbose=True)
+	solver.plot_evolution(100, 100, label)
 	solver.save_phi(label)
 	end_time = time.time()
 	print('The simulation took: {}'.format(end_time - start_time))
