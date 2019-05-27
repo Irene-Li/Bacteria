@@ -2,8 +2,8 @@ import time
 import numpy as np
 from StoEvolution import *
 
-for ep in [1e-2, 1e-3, 1e-4]:
-	label = 'sto_ep_{}_flat'.format(ep)
+for ep in [1e-2]:
+	label = 'sto_ep_{}_flat_long'.format(ep)
 	solver = StoEvolution()
 	solver.load(label)
 	solver.rescale_to_standard()

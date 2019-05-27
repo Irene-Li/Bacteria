@@ -44,8 +44,8 @@ class activeModels():
 # now set-up the simulation
 a, b, k    = -0.25, 0.25, 1
 rate, phi_s = 1e-5, 100
-Nt, dt, dd = 5000001, .005, 1000
-phi0, nfac = -0.4, np.sqrt(2*Teff/dt)
+Nt, dt, dd = int(2e6+1), .005, 1000
+phi0, nfac = 0, np.sqrt(2*Teff/dt)
 nfac2 = np.sqrt(2*Teff*rate*phi_s/dt)
 print(nfac)
 
@@ -93,13 +93,12 @@ def rhs(u):
 
 
 am = activeModels(Nt, dt, dd, rhs)
-u = phi0 + 0*(1-2*np.random.random((Ng,Ng)))
-#u = pymaft.utils.bubble(u, 15)
-
+u = np.zeros((Ng, Ng))
+u[0, 1] = Ng*Ng*0.5
 
 # run the simulation now!
 t1 = time.perf_counter()
-am.integrate(np.fft.fft2(u))
+am.integrate(u)
 
 # save data
 savemat('N%s__u0%2.2f_a%4.4f_DA.mat'%(Ng, phi0, a), {'X':am.XX, 'a':a, 'b':b, 'k':k, 'Ng':Ng, 'Nt':am.Nt, 'dt':dt, 'nfac':nfac, 'Tsim':time.perf_counter()-t1})
