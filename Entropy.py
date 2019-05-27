@@ -151,16 +151,31 @@ class EntropyProductionFourier(EntropyProduction):
 		plt.show()
 
 	def entropy_with_modelAB(self):
+		reg = 1
+
 		self._make_laplacian_matrix()
+		self._make_first_order_matrix()
 		self._make_gradient_matrix()
+		self._make_noise_matrix()
+		self._add_to_translational_dof(reg=reg)
+		self._make_correlation_matrix()
+
 		final_phi_fourier = fft(self.final_phi)
 		final_phi_cube_fourier = fft(self.final_phi**3)
-		mu = self.a*(-final_phi_fourier + final_phi_cube_fourier) - self.k*self._laplacian_fourier*final_phi_fourier
-		J_1 = self._gradient_fourier * mu
+		mu1 = self.a*(-final_phi_fourier + final_phi_cube_fourier) - self.k*self._laplacian_fourier*final_phi_fourier
+		mu2 = self.u*(self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target)
+
+		C = self._project_matrix(self.correlation_matrix)
+		C_reg = C + self.projection_onto_gm
+		C_inv = sl.inv(C_reg)
+		C_inv = self._project_matrix(C_inv)
+		C_inv_phi = C_inv.dot(final_phi_fourier)
+
+		J_1 = self._gradient_fourier * (mu1 - C_inv_phi)
 		J_1 = ifft(J_1)
 
-		J_2 = self.u*(self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target)
-		M_2 = self.u*(self.phi_shift+self.phi_target)/2
+		J_2 = mu2 - ifft(C_inv_phi)
+		M_2 = self.u*(self.phi_shift+self.phi_target/2)
 
 		self.entropy_from_model_B_current = J_1*J_1
 		self.entropy_from_model_A_current = J_2*J_2/M_2
@@ -264,7 +279,8 @@ if __name__ == "__main__":
 	# solver.entropy_with_modelAB()
 	# solver.plot_entropy_from_modelAB_currents(label)
 
-	solver.calculate_entropy()
+	# solver.calculate_entropy()
+	solver.entropy_with_modelAB()
 	# solver.read_entropy(label)
 	solver.plot_entropy(label+'new')
 	solver.write_entropy(label+'new')
