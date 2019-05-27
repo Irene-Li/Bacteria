@@ -44,7 +44,7 @@ class activeModels():
 # now set-up the simulation
 a, b, k    = -0.25, 0.25, 1
 rate, phi_s = 1e-5, 100
-Nt, dt, dd = 1000001, .005, 1000
+Nt, dt, dd = 5000001, .005, 1000
 phi0, nfac = -0.4, np.sqrt(2*Teff/dt)
 nfac2 = np.sqrt(2*Teff*rate*phi_s/dt)
 print(nfac)
