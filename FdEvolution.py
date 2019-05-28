@@ -8,23 +8,6 @@ from TimeEvolution import TimeEvolution
 
 class FdEvolution(TimeEvolution):
 
-	def initialise(self, X, dx, T, dt, n_batches, initial_value, random=False):
-		self.dx = dx
-		self.size = int(X/dx) #+ 5
-		self.X = X
-		self.T = T
-		self.dt = dt
-		self.n_batches = int(n_batches)
-		self.step_size = T/(self.n_batches-1)
-		self.batch_size = int(np.floor(self.step_size/self.dt))
-		self._modify_params()
-
-		if random:
-			self.phi_initial = self._random_init(initial_value)
-		else:
-			# self.phi_initial = self._slow_mfold(initial_value)
-			self.phi_initial = self._sin_surface(initial_value)
-
 	def evolve(self):
 		self._evolve_pbc()
 
@@ -39,18 +22,6 @@ class FdEvolution(TimeEvolution):
 		self.a = 1
 		self.k = 1
 		self.u = self.u/time_ratio
-
-	def _modify_params(self):
-		length_ratio = 1/self.dx
-		self.dx = 1
-		self.X = self.X * length_ratio
-		self.a = (1/self.k)*self.a/length_ratio**2
-		time_ratio = length_ratio**4 * (self.k/1)
-		self.k = 1
-		self.T = self.T * time_ratio
-		self.u = self.u/time_ratio
-		self.dt = self.dt * time_ratio
-		self.step_size = self.step_size * time_ratio
 
 
 	def _diff(self, phi):
