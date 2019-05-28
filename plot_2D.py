@@ -4,9 +4,8 @@ from scipy.io import savemat, loadmat
 import numpy as np
 
 Ng = 128
-phi0 = 0.4
-a = -0.25
-label = 'N128__u00.00_a-0.2500'
+
+label = 'N128__u0-0.40_a-0.2500'
 M = loadmat(label + '_DA.mat')
 evol = M['X']
 evol = evol[::10]
