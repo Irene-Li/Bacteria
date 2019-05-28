@@ -26,10 +26,9 @@ class StoEvolution(FdEvolution):
 		self.M1 = 1
 		self.M2 = self.u*(self.phi_shift+self.phi_target/2)
 		self._modify_params()
-		self._make_gradient_matrix()
 
 		if flat:
-			self.phi_initial = np.zeros((self.size))
+			self.phi_initial = self._flat_surface(initial_value)
 		else:
 			self.phi_initial = self._sin_surface(initial_value)
 
@@ -87,6 +86,7 @@ class StoEvolution(FdEvolution):
 	def evolve(self, verbose=True):
 		self.phi = np.zeros((self.n_batches, self.size))
 		self._make_laplacian_matrix()
+		self._make_gradient_matrix()
 		r = ode(self._delta).set_integrator('lsoda', atol=1e-8)
 		r.set_initial_value(self.phi_initial, 0)
 
@@ -100,7 +100,6 @@ class StoEvolution(FdEvolution):
 					n += 1
 				r.set_initial_value(r.y + self._noisy_delta(), r.t)
 				r.integrate(r.t+self.dt)
-		return self.phi
 
 	def _modify_params(self):
 		length_ratio = self.dx
@@ -134,6 +133,8 @@ class StoEvolution(FdEvolution):
 	def rescale_to_standard(self):
 		pass
 
+	def _flat_surface(self, initial_value):
+		return np.zeros((self.size)) + initial_value
 
 	def _delta(self, t, phi):
 		mu = self.a * (- phi + phi**3) - self.k * self._laplacian(phi)
