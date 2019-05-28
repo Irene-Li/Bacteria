@@ -171,10 +171,10 @@ class EntropyProductionFourier(EntropyProduction):
 		C_inv = self._project_matrix(C_inv)
 		C_inv_phi = C_inv.dot(final_phi_fourier)
 
-		J_1 = self._gradient_fourier * (mu1 - C_inv_phi)
+		J_1 = self._gradient_fourier * (mu1 + C_inv_phi)
 		J_1 = ifft(J_1)
 
-		J_2 = mu2 - ifft(C_inv_phi)
+		J_2 = mu2 + ifft(C_inv_phi)
 		M_2 = self.u*(self.phi_shift+self.phi_target/2)
 
 		self.entropy_from_model_B_current = J_1*J_1

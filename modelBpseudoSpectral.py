@@ -101,4 +101,4 @@ t1 = time.perf_counter()
 am.integrate(u)
 
 # save data
-savemat('N%s__u0%2.2f_a%4.4f_DA.mat'%(Ng, phi0, a), {'X':am.XX, 'a':a, 'b':b, 'k':k, 'Ng':Ng, 'Nt':am.Nt, 'dt':dt, 'nfac':nfac, 'Tsim':time.perf_counter()-t1})
+savemat('N%s__u0%2.2f_a%4.4f_sin_init.mat'%(Ng, phi0, a), {'X':am.XX, 'a':a, 'b':b, 'k':k, 'Ng':Ng, 'Nt':am.Nt, 'dt':dt, 'nfac':nfac, 'Tsim':time.perf_counter()-t1})
