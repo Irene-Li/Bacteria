@@ -81,10 +81,13 @@ class StoEvolutionPS(StoEvolution):
 
     def make_movie(self, label, t_grid=1):
         fig = plt.figure()
+        low, high = -1.2, 1.2
         ims = []
+        im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True)
+        plt.colorbar(im)
         for i in range(self.n_batches):
             xy = self.phi[i]
-            im = plt.imshow(xy, animated=True)
+            im = plt.imshow(xy, vmin=low, vmax=high, animated=True)
             ims.append([im])
         ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
                                         repeat_delay=1000)
@@ -103,13 +106,13 @@ if __name__ == '__main__':
 
     X = 128
     dx = 1
-    T = 1e5
+    T = 1e3
     dt = 1e-3
     n_batches = 1000
     initial_value = 0
-    flat = True
+    flat = False
 
-    for flat in [True, False]:
+    for flat in [False]:
     	label = 'ep_{}_flat_{}'.format(epsilon, flat)
 
     	start_time = time.time()
