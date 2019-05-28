@@ -57,7 +57,7 @@ class StoEvolutionPS(StoEvolution):
         phi_sq = self.dealiasing_double*fft2(phi_x**2)
 
         mu = self.a*(-phi+phi_cube) + self.k*self.ksq*phi
-        birth_death = - self.u * (phi_sq+(self.phi_shift-self.phi_target)*phi)
+        birth_death = - self.u*(phi_sq+(self.phi_shift-self.phi_target)*phi)
         birth_death[0] += self.u*self.phi_shift*self.phi_target*self.size**2
         dphidt = -self.M1*self.ksq*mu + birth_death
         return dphidt
@@ -101,16 +101,16 @@ if __name__ == '__main__':
     phi_t = 0
     phi_shift = 100
 
-    X = 64
+    X = 128
     dx = 1
-    T = 1000
+    T = 1e5
     dt = 1e-3
-    n_batches = 100
+    n_batches = 1000
     initial_value = 0
     flat = True
 
-    for epsilon in [1e-1]:
-    	label = 'sto_ep_{}_test'.format(epsilon)
+    for flat in [True, False]:
+    	label = 'ep_{}_flat_{}'.format(epsilon, flat)
 
     	start_time = time.time()
     	solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
