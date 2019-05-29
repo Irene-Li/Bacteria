@@ -14,7 +14,7 @@ class TimeEvolution:
 		self.phi_shift = phi_shift
 		self.phi_target = phi_target
 
-	def initialise(self, X, dx, T, dt, n_batches, initial_value, random=False):
+	def initialise(self, X, dx, T, dt, n_batches, initial_value, flat=False):
 		self.dx = dx
 		self.size = int(X/dx) #+ 5
 		self.X = X
@@ -25,7 +25,7 @@ class TimeEvolution:
 		self.batch_size = int(np.floor(self.step_size/self.dt))
 		self._modify_params()
 
-		if random:
+		if flat:
 			self.phi_initial = self._random_init(initial_value)
 		else:
 			self.phi_initial = self._sin_surface(initial_value)
@@ -262,10 +262,7 @@ class TimeEvolution:
 		plt.savefig('{}_final.pdf'.format(label))
 		plt.close()
 
-	def _modify_params():
-		pass
-
-	def rescale_to_standard():
+	def rescale_to_standard(self):
 		pass
 
 	def _sin_surface(self, phi_average):
