@@ -24,7 +24,7 @@ class StoEvolutionPS(StoEvolution):
                 if verbose:
                     print('iteration: {}	mean: {}'.format(i, phi[0, 0]/(self.size**2)))
                 n += 1
-            phi += self._delta(phi)*self.dt+ self._noisy_delta()
+            phi += self._delta(phi)*self.dt +self._noisy_delta()
 
     def _make_k_grid(self):
         Nx, Ny = self.size, self.size
@@ -76,7 +76,7 @@ class StoEvolutionPS(StoEvolution):
 
     def _sin_surface(self, initial_value):
         phi = np.zeros((self.size, self.size)) + 0j
-        phi[0, 1] = self.size*self.size*0.1
+        phi[0, 1] = self.size*self.size*1
         return phi
 
     def make_movie(self, label, t_grid=1):
@@ -97,8 +97,8 @@ class StoEvolutionPS(StoEvolution):
 
 if __name__ == '__main__':
 
-    epsilon = 1e-1
-    a = 0.25
+    epsilon = 0.1
+    a = 0.2
     k = 1
     u = 1e-5
     phi_t = 0
@@ -106,14 +106,14 @@ if __name__ == '__main__':
 
     X = 128
     dx = 1
-    T = 1e3
+    T = 1e4
     dt = 1e-3
     n_batches = 1000
     initial_value = 0
-    flat = False
+    flat = True
 
-    for flat in [False]:
-    	label = 'ep_{}_flat_{}'.format(epsilon, flat)
+    for u in [1e-5, 1e-6]:
+    	label = 'u_{}_flat'.format(u)
 
     	start_time = time.time()
     	solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
