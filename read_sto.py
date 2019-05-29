@@ -1,7 +1,7 @@
 import numpy as np
 from StoEvolutionPS import *
 
-labels = ['sto_ep_0.1_test']
+labels = ['ep_0_flat_False']
 t_size = 100
 x_size = 200
 
