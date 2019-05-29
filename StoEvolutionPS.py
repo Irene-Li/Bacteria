@@ -76,7 +76,7 @@ class StoEvolutionPS(StoEvolution):
 
     def _sin_surface(self, initial_value):
         phi = np.zeros((self.size, self.size)) + 0j
-        phi[0, 1] = self.size*self.size*1
+        phi[0, 1] = self.size*self.size*1 # blows up
         return phi
 
     def make_movie(self, label, t_grid=1):
@@ -107,13 +107,13 @@ if __name__ == '__main__':
     X = 128
     dx = 1
     T = 1e4
-    dt = 1e-3
+    dt = 5e-3
     n_batches = 1000
     initial_value = 0
     flat = True
 
     for u in [1e-5, 1e-6]:
-    	label = 'u_{}_flat'.format(u)
+    	label = 'u_{}_dt_{}'.format(u, dt)
 
     	start_time = time.time()
     	solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
