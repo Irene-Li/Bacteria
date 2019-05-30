@@ -101,7 +101,7 @@ if __name__ == '__main__':
     a = 0.2
     k = 1
     u = 1e-5
-    phi_t = 0
+    phi_t = -0.4
     phi_shift = 100
 
     X = 128
@@ -112,8 +112,9 @@ if __name__ == '__main__':
     initial_value = 0
     flat = True
 
-    for phi_t in [-0.4, -0.5, -0.6, -0.7]:
-    	label = 'u_{}_phi_t_{}'.format(u, phi_t)
+    for phi_shift in [10, 5, 2]:
+        u = 1e-4/phi_shift
+    	label = 'u_{}_phi_s_{}'.format(u, phi_shift)
 
     	start_time = time.time()
     	solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
