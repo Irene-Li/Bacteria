@@ -108,12 +108,12 @@ if __name__ == '__main__':
     dx = 1
     T = 1e4
     dt = 5e-3
-    n_batches = 1000
+    n_batches = 100
     initial_value = 0
     flat = True
 
-    for u in [1e-5, 1e-6]:
-    	label = 'u_{}_dt_{}'.format(u, dt)
+    for phi_t in [-0.4, -0.5, -0.6, -0.7]:
+    	label = 'u_{}_phi_t_{}'.format(u, phi_t)
 
     	start_time = time.time()
     	solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
