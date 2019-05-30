@@ -16,7 +16,7 @@ class PsEvolution(TimeEvolution):
 		phi = self.phi_initial
 
 		small_batch = self.batch_size
-		while small_batch > 1000:
+		while small_batch > 10000:
 			small_batch /= 10 # decrease the amount of time integration at each step
 
 		r = ode(self._delta).set_integrator('vode', atol=1e-8, nsteps=small_batch)
@@ -95,13 +95,22 @@ class PsEvolution(TimeEvolution):
 		return np.ravel(init)
 
 	def _sin_surface(self, initial_value):
-		phi = np.zeros((self.size, self.size)) + 0j
-		phi[0, 1] = self.size*self.size*0.1
-		return phi
+		x = np.arange(self.size)
+		y = np.arange(self.size)
+		x, y = np.meshgrid(x, y)
+		midpoint = int(self.size/2)
+		l = np.sqrt(self.k/self.a)
+		phi = - np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2) - self.size/4)/l)
+		phi += initial_value
+		phi_complex = fft2(phi)
+		return self._make_real(phi_complex)
 
 	def make_movie(self, label, t_grid=1):
 		fig = plt.figure()
 		ims = []
+		low, high = -1.2, 1.2
+		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True)
+		plt.colorbar(im)
 		for i in range(self.n_batches):
 			xy = self.phi[i]
 			im = plt.imshow(xy, animated=True)
@@ -117,18 +126,18 @@ if __name__ == '__main__':
 	a = 0.1
 	k = 1
 	u = 0
-	phi_t = 0
+	phi_t = 0.6
 	phi_shift = 100
 
-	X = 128
+	X = 64
 	dx = 1
 	T = 1e2
 	dt = 1e-3
 	n_batches = 100
 	initial_value = 0
-	flat = True
+	flat = False
 
-	for u in [0, 1e-6]:
+	for u in [1e-3, 1e-2]:
 		label = 'u_{}_dt_{}'.format(u, dt)
 
 		start_time = time.time()
