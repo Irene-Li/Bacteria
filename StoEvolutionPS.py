@@ -26,6 +26,21 @@ class StoEvolutionPS(StoEvolution):
 				n += 1
 			phi += self._delta(phi)*self.dt +self._noisy_delta()
 
+	def double_droplet_init(self):
+		x = np.arange(self.size)
+		y = np.arange(self.size)
+		x, y = np.meshgrid(x, y)
+		midpoint1 = int(self.size/3)
+		midpoint2 = 2*midpoint1
+		l = np.sqrt(self.k/self.a)
+		size1 = int(self.size/6)
+		size2 = int(self.size/10)
+
+		phi1 = - np.tanh((np.sqrt((x-midpoint1)**2+(y-midpoint1)**2)-size1)/l)+1
+		phi2 = - np.tanh((np.sqrt((x-midpoint2)**2+(y-midpoint2)**2)-size2)/l)+1
+		phi = phi1+phi2-1
+		self.phi_initial = fft2(phi)
+
 	def _plot_state(self, phi, n):
 		plt.imshow(phi)
 		plt.colorbar()
@@ -38,7 +53,6 @@ class StoEvolutionPS(StoEvolution):
 		ky = fftfreq(Ny)*2*np.pi
 		self.kx, self.ky = np.meshgrid(kx, ky)
 		self.ksq = self.kx*self.kx + self.ky*self.ky
-		self._plot_state(self.ksq, 'ksq')
 
 	def _make_filters(self):
 		kk1 = self.kx
@@ -86,9 +100,10 @@ class StoEvolutionPS(StoEvolution):
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
-		var = self.k/self.a
-		phi = np.exp(-((x-midpoint)**2+(y-midpoint)**2)/(var*2))
-		phi += initial_value/2
+		size = self.size/3
+		l = np.sqrt(self.k/self.a)
+		phi = - np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-size)/l)
+		phi += initial_value
 		return fft2(phi)
 
 
@@ -114,24 +129,25 @@ if __name__ == '__main__':
 	a = 0.2
 	k = 1
 	u = 1e-5
-	phi_t = -0.8
-	phi_shift = 100
+	phi_t = 0
+	phi_shift = 10
 
-	X = 128
+	X = 64
 	dx = 1
-	T = 1e5
+	T = 5e2
 	dt = 5e-3
 	n_batches = 100
 	initial_value = 0
-	flat = True
+	flat = False
 
 	for phi_shift in [10]:
-		u = 1e-6/phi_shift
-		label = 'u_{}_phi_s_{}_droplet'.format(u, phi_shift)
+		u = 1e-3/phi_shift
+		label = 'u_{}_phi_s_{}'.format(u, phi_shift)
 
 		start_time = time.time()
 		solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
 		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
+		# solver.double_droplet_init()
 		solver.save_params(label)
 		solver.print_params()
 		solver.evolve(verbose=True)

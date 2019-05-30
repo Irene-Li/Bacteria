@@ -6,8 +6,8 @@ labels = ['u_0_dt_0.0001']
 t_size = 100
 x_size = 200
 
-for u in [1e-5, 1e-6]:
-    for dt in [5e-3]:
+for u in [1e-4]:
+    for dt in [1e-3]:
         label = 'u_{}_dt_{}'.format(u, dt)
         solver = PsEvolution()
         solver.load(label)
