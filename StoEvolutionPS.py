@@ -26,12 +26,19 @@ class StoEvolutionPS(StoEvolution):
 				n += 1
 			phi += self._delta(phi)*self.dt +self._noisy_delta()
 
+	def _plot_state(self, phi, n):
+		plt.imshow(phi)
+		plt.colorbar()
+		plt.savefig('state_{}.pdf'.format(n))
+		plt.close()
+
 	def _make_k_grid(self):
 		Nx, Ny = self.size, self.size
 		kx = fftfreq(Nx)*2*np.pi
 		ky = fftfreq(Ny)*2*np.pi
 		self.kx, self.ky = np.meshgrid(kx, ky)
 		self.ksq = self.kx*self.kx + self.ky*self.ky
+		self._plot_state(self.ksq, 'ksq')
 
 	def _make_filters(self):
 		kk1 = self.kx
@@ -75,9 +82,15 @@ class StoEvolutionPS(StoEvolution):
 		return np.zeros((self.size, self.size)) + initial_value + 0j
 
 	def _sin_surface(self, initial_value):
-		phi = np.zeros((self.size, self.size)) + 0j
-		phi[0, 1] = self.size*self.size*1 # blows up
-		return phi
+		x = np.arange(self.size)
+		y = np.arange(self.size)
+		x, y = np.meshgrid(x, y)
+		midpoint = int(self.size/2)
+		var = self.k/self.a
+		phi = np.exp(-((x-midpoint)**2+(y-midpoint)**2)/(var*2))
+		phi += initial_value/2
+		return fft2(phi)
+
 
 	def make_movie(self, label, t_grid=1):
 		fig = plt.figure()
@@ -101,20 +114,20 @@ if __name__ == '__main__':
 	a = 0.2
 	k = 1
 	u = 1e-5
-	phi_t = -0.4
+	phi_t = -0.8
 	phi_shift = 100
 
 	X = 128
 	dx = 1
-	T = 1e4
+	T = 1e5
 	dt = 5e-3
 	n_batches = 100
 	initial_value = 0
 	flat = True
 
-	for phi_shift in [10, 5, 2]:
-		u = 1e-4/phi_shift
-		label = 'u_{}_phi_s_{}'.format(u, phi_shift)
+	for phi_shift in [10]:
+		u = 1e-6/phi_shift
+		label = 'u_{}_phi_s_{}_droplet'.format(u, phi_shift)
 
 		start_time = time.time()
 		solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
