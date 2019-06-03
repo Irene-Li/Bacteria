@@ -93,7 +93,9 @@ class StoEvolutionPS(StoEvolution):
 		return noise
 
 	def _flat_surface(self, initial_value):
-		return np.zeros((self.size, self.size)) + initial_value + 0j
+		phi = np.zeros((self.size, self.size))+0j
+		phi[0, 0] += initial_value*(self.size)**2
+		return phi
 
 	def _sin_surface(self, initial_value):
 		x = np.arange(self.size)
@@ -129,25 +131,24 @@ if __name__ == '__main__':
 	a = 0.2
 	k = 1
 	u = 1e-5
-	phi_t = 0
+	phi_t = -0.8
 	phi_shift = 10
 
-	X = 64
+	X = 128
 	dx = 1
-	T = 5e2
+	T = 1e5
 	dt = 5e-3
-	n_batches = 100
-	initial_value = 0
-	flat = False
+	n_batches = 1000
+	initial_value = -0.8
+	flat = True
 
-	for phi_shift in [10]:
-		u = 1e-3/phi_shift
-		label = 'u_{}_phi_s_{}'.format(u, phi_shift)
+	for phi_t in [-0.8, -0.7, -0.6, -0.5]:
+		label = 'phi_t_{}_nuc'.format(phi_t)
+		initial_value = phi_t
 
 		start_time = time.time()
 		solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
 		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
-		# solver.double_droplet_init()
 		solver.save_params(label)
 		solver.print_params()
 		solver.evolve(verbose=True)
