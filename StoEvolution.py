@@ -68,6 +68,8 @@ class StoEvolution(FdEvolution):
 		self.size = params['size']
 		self.n_batches = params['n_batches']
 		self.step_size = params['step_size']
+		self.M1 = 1/self.k
+		self.M2 = self.u*(self.phi_shift+self.phi_target/2)
 
 	def save_phi(self, label):
 		np.save("{}_data.npy".format(label), self.phi)
@@ -127,7 +129,9 @@ class StoEvolution(FdEvolution):
 		'a', self.a, '\n',
 		'k', self.k, '\n',
 		'u', self.u, '\n',
-		'epsilon', self.epsilon, '\n'
+		'epsilon', self.epsilon, '\n',
+		'phi_shift', self.phi_shift, '\n',
+		'phi_target', self.phi_target, '\n'
 		)
 
 	def rescale_to_standard(self):
