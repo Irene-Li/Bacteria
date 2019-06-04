@@ -102,10 +102,9 @@ class StoEvolutionPS(StoEvolution):
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
-		size = self.size/3
+		size = 25
 		l = np.sqrt(self.k/self.a)
-		phi = - np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-size)/l)
-		phi += initial_value
+		phi = - np.tanh((np.sqrt(1.2*(x-midpoint)**2+0.7*(y-midpoint)**2)-size)/l)
 		return fft2(phi)
 
 
@@ -136,14 +135,14 @@ if __name__ == '__main__':
 
 	X = 128
 	dx = 1
-	T = 1e5
+	T = 1e4
 	dt = 5e-3
-	n_batches = 1000
+	n_batches = 100
 	initial_value = -0.8
-	flat = True
+	flat = False
 
-	for phi_t in [-0.8, -0.7, -0.6, -0.5]:
-		label = 'phi_t_{}_nuc'.format(phi_t)
+	for u in [1e-5, 5e-5]:
+		label = 'u_{}_skewed_droplet'.format(u)
 		initial_value = phi_t
 
 		start_time = time.time()
