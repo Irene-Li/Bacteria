@@ -19,7 +19,7 @@ class PsEvolution(TimeEvolution):
 		while small_batch > 10000:
 			small_batch /= 10 # decrease the amount of time integration at each step
 
-		r = ode(self._delta).set_integrator('vode', atol=1e-8, nsteps=small_batch)
+		r = ode(self._delta).set_integrator('vode', atol=1e-7, nsteps=small_batch)
 		r.set_initial_value(self.phi_initial, 0)
 
 		n = 0
@@ -99,9 +99,9 @@ class PsEvolution(TimeEvolution):
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
+		size = 25
 		l = np.sqrt(self.k/self.a)
-		phi = - np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2) - self.size/4)/l)
-		phi += initial_value
+		phi = - np.tanh((np.sqrt(1.2*(x-midpoint)**2+0.7*(y-midpoint)**2)-size)/l)
 		phi_complex = fft2(phi)
 		return self._make_real(phi_complex)
 
@@ -123,22 +123,23 @@ class PsEvolution(TimeEvolution):
 
 if __name__ == '__main__':
 
-	a = 0.1
+	epsilon = 0.1
+	a = 0.2
 	k = 1
-	u = 0
-	phi_t = 0.6
-	phi_shift = 100
+	u = 1e-5
+	phi_t = -0.8
+	phi_shift = 10
 
-	X = 64
+	X = 128
 	dx = 1
-	T = 1e2
-	dt = 1e-3
+	T = 100
+	dt = 5e-3
 	n_batches = 100
-	initial_value = 0
+	initial_value = -0.8
 	flat = False
 
-	for u in [1e-3, 1e-2]:
-		label = 'u_{}_dt_{}'.format(u, dt)
+	for u in [1e-5, 1e-4]:
+		label = 'u_{}_skewed_droplet'.format(u)
 
 		start_time = time.time()
 		solver = PsEvolution(a, k, u, phi_t, phi_shift)
