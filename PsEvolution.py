@@ -132,9 +132,9 @@ if __name__ == '__main__':
 
 	X = 128
 	dx = 1
-	T = 100
-	dt = 5e-3
-	n_batches = 100
+	T = 1e4
+	dt = 1e-3
+	n_batches = 1000
 	initial_value = -0.8
 	flat = False
 
