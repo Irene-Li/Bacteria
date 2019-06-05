@@ -129,7 +129,7 @@ if __name__ == '__main__':
 	initial_value = -0.8
 	flat = False
 
-	for phi_t in [-0.6]:
+	for phi_t in [-0.7]:
 		label = 'phi_t_{}_skewed_droplet'.format(phi_t)
 		initial_value = phi_t
 
