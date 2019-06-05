@@ -79,7 +79,7 @@ class StoEvolutionPS(StoEvolution):
 
 		mu = self.a*(-phi+phi_cube) + self.k*self.ksq*phi
 		birth_death = - self.u*(phi_sq+(self.phi_shift-self.phi_target)*phi)
-		birth_death[0] += self.u*self.phi_shift*self.phi_target*self.size**2
+		birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
 		dphidt = -self.M1*self.ksq*mu + birth_death
 		return dphidt
 
