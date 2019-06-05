@@ -83,7 +83,7 @@ class PsEvolution(TimeEvolution):
 
 		mu = (-self.a+self.k*self.ksq)*phi_complex + self.a*phi_cube
 		birth_death = - self.u*(phi_sq+(self.phi_shift-self.phi_target)*phi_complex)
-		birth_death[0] += self.u*self.phi_shift*self.phi_target*self.size**2
+		birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
 		dphidt_complex = -self.ksq*mu + birth_death
 		return self._make_real(dphidt_complex)
 
