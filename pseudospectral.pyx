@@ -22,11 +22,6 @@ def make_k_grid(int size):
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
-
-
-
-@cython.wraparound(False)
-@cython.boundscheck(False)
 def evolve(np.complex128_t [:, :] init, double a, double k, double u, double phi_s, double phi_t, double epsilon, double dt, int nitr, int batch_size, int size):
 	cdef double [:, ::1] kx_grid, ky_grid, ksq
 	kx_grid, ky_grid, ksq = make_k_grid(size)
