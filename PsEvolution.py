@@ -49,7 +49,6 @@ class PsEvolution(TimeEvolution):
 		phi = phi_complex.view(np.float64)
 		return np.ravel(phi)
 
-
 	def _make_k_grid(self):
 		Nx, Ny = self.size, self.size
 		kx = fftfreq(Nx)*2*np.pi
@@ -58,28 +57,20 @@ class PsEvolution(TimeEvolution):
 		self.ksq = self.kx*self.kx + self.ky*self.ky
 
 	def _make_filters(self):
-		kk1 = self.kx
-		kmax = np.max(kk1)
-		filtr = np.ones_like(kk1)
-		filtr2 = np.ones_like(kk1)
-		filtr[np.where(kk1>kmax*2./3)] = 0.
-		filtr2[np.where(kk1>kmax*1./2)] = 0.
+		kmax = np.max(np.abs(self.kx))
+		filtr = (self.kx > kmax*2/3)
+		filtr2 = (self.kx > kmax*1/2)
 
-		kk1 = self.ky
-		kmax = np.max(kk1)
-		filtr_1 = np.ones_like(kk1)
-		filtr_12 = np.ones_like(kk1)
-		filtr_1[np.where(np.abs(kk1)>kmax*2./3)] = 0.
-		filtr_12[np.where(np.abs(kk1)>kmax*1./2)] = 0.
-
-		self.dealiasing_double = filtr*filtr_1
-		self.dealiasing_triple = filtr2*filtr_12
+		self.dealiasing_double = filtr | filtr.T
+		self.dealiasing_triple = filtr2 | filtr2.T
 
 	def _delta(self, t, phi):
 		phi_complex = self._make_complex(phi)
 		phi_x = ifft2(phi_complex)
-		phi_cube = self.dealiasing_triple*fft2(phi_x**3)
-		phi_sq = self.dealiasing_double*fft2(phi_x**2)
+		phi_cube = fft2(phi_x**3)
+		phi_sq = fft2(phi_x**2)
+		np.putmask(phi_cube, self.dealiasing_triple, 0)
+		np.putmask(phi_sq, self.dealiasing_double, 0)
 
 		mu = (-self.a+self.k*self.ksq)*phi_complex + self.a*phi_cube
 		birth_death = - self.u*(phi_sq+(self.phi_shift-self.phi_target)*phi_complex)
@@ -132,7 +123,7 @@ if __name__ == '__main__':
 
 	X = 128
 	dx = 1
-	T = 1e4
+	T = 1e3
 	dt = 1e-3
 	n_batches = 1000
 	initial_value = -0.8
