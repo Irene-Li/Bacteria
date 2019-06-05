@@ -149,7 +149,7 @@ class StoEvolution(FdEvolution):
 	def _make_gradient_matrix(self):
 		n = int(self.size/2)
 		x = np.arange(n)
-		laplacian_fourier = - 2 * (1 - np.cos(2 * np.pi * x/self.size))
+		self._laplacian_fourier = - 2 * (1 - np.cos(2 * np.pi * x/self.size))
 		self._gradient_fourier = np.sqrt(- laplacian_fourier)
 
 	def _noisy_delta(self):
@@ -157,9 +157,8 @@ class StoEvolution(FdEvolution):
 		dW = np.random.normal(0.0, np.sqrt(self.epsilon*self.dt*self.size), self.size)
 		dW[0] *= np.sqrt(2)
 		dW[-1] *= np.sqrt(2)
-		noise_fourier = np.sqrt(self.M2)*dW
-		noise_fourier[1:self.size-1:2] -= np.sqrt(self.M1)*self._gradient_fourier[1:]*dW[2:self.size-1:2]
-		noise_fourier[2:self.size-1:2] += np.sqrt(self.M1)*self._gradient_fourier[1:]*dW[1:self.size-1:2]
+		noise_fourier[1:self.size-1:2] = np.sqrt(-self.M1*self._laplacian_fourier[1:] + self.M2)*dW[2:self.size-1:2]
+		noise_fourier[2:self.size-1:2] = np.sqrt(-self.M1*self._laplacian_fourier[1:] + self.M2)*dW[1:self.size-1:2]
 		return irfft(noise_fourier)
 
 	def _random_init(self, initial_value):

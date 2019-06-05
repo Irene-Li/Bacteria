@@ -4,6 +4,7 @@ from matplotlib import animation as am
 import time
 import scipy.sparse as sp
 from scipy.fftpack import fft2, ifft2, fftfreq
+import pyfftw
 import json
 from StoEvolution import *
 
@@ -14,6 +15,7 @@ class StoEvolutionPS(StoEvolution):
 	def evolve(self, verbose=True):
 		self._make_k_grid()
 		self._make_filters()
+		self._set_up_fftw()
 		self.phi = np.zeros((self.n_batches, self.size, self.size))
 		phi = self.phi_initial
 
@@ -62,10 +64,23 @@ class StoEvolutionPS(StoEvolution):
 		self.dealiasing_double = filtr | filtr.T
 		self.dealiasing_triple = filtr2 | filtr2.T
 
+	def _set_up_fftw(self):
+		self.input_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		output = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.fft_forward = pyfftw.FFTW(self.input_forward, output, axes=(0, 1))
+
+		self.input_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.fft_backward = pyfftw.FFTW(self.input_backward, output,
+										direction='FFTW_BACKWARD', axes=(0, 1))
+
+
 	def _delta(self, phi):
-		phi_x = ifft2(phi)
-		phi_cube = fft2(phi_x**3)
-		phi_sq = fft2(phi_x**2)
+		self.input_backward = phi
+		phi_x = self.fft_backward()
+		self.input_forward = phi_x**2
+		phi_sq = self.fft_forward()
+		self.input_forward *= phi_x
+		phi_cube = self.fft_forward()
 		np.putmask(phi_cube, self.dealiasing_triple, 0)
 		np.putmask(phi_sq, self.dealiasing_double, 0)
 
@@ -76,7 +91,8 @@ class StoEvolutionPS(StoEvolution):
 		return dphidt
 
 	def _noisy_delta(self):
-		dW = fft2(np.random.normal(size=(self.size, self.size)))
+		self.input_forward = np.random.normal(size=(self.size, self.size))
+		dW = self.fft_forward()
 		noise = np.sqrt(2*(self.M2+self.ksq*self.M1)*self.epsilon*self.dt)*dW
 		return noise
 
@@ -118,24 +134,24 @@ if __name__ == '__main__':
 	a = 0.2
 	k = 1
 	u = 1e-5
-	phi_t = -0.6
+	phi_t = 0
 	phi_shift = 10
 
 	X = 128
 	dx = 1
-	T = 1e4
+	T = 1e3
 	dt = 5e-3
 	n_batches = 100
-	initial_value = -0.8
+	initial_value = 0
 	flat = False
 
-	for phi_t in [-0.7]:
-		label = 'phi_t_{}_skewed_droplet'.format(phi_t)
+	for u in [1e-4, 5e-5]:
+		label = 'u_{}_flat'.format(u)
 		initial_value = phi_t
 
 		start_time = time.time()
 		solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
-		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
+		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=False)
 		solver.save_params(label)
 		solver.print_params()
 		solver.evolve(verbose=True)
