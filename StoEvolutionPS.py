@@ -55,27 +55,19 @@ class StoEvolutionPS(StoEvolution):
 		self.ksq = self.kx*self.kx + self.ky*self.ky
 
 	def _make_filters(self):
-		kk1 = self.kx
-		kmax = np.max(np.abs(kk1))
-		filtr = np.ones_like(kk1)
-		filtr2 = np.ones_like(kk1)
-		filtr[np.where(np.abs(kk1)>kmax*2./3)] = 0.
-		filtr2[np.where(np.abs(kk1)>kmax*1./2)] = 0.
+		kmax = np.max(np.abs(self.kx))
+		filtr = (self.kx > kmax*2/3)
+		filtr2 = (self.kx > kmax*1/2)
 
-		kk1 = self.ky
-		kmax = np.max(np.abs(kk1))
-		filtr_1 = np.ones_like(kk1)
-		filtr_12 = np.ones_like(kk1)
-		filtr_1[np.where(np.abs(kk1)>kmax*2./3)] = 0.
-		filtr_12[np.where(np.abs(kk1)>kmax*1./2)] = 0.
-
-		self.dealiasing_double = filtr*filtr_1
-		self.dealiasing_triple = filtr2*filtr_12
+		self.dealiasing_double = filtr | filtr.T
+		self.dealiasing_triple = filtr2 | filtr2.T
 
 	def _delta(self, phi):
 		phi_x = ifft2(phi)
-		phi_cube = self.dealiasing_triple*fft2(phi_x**3)
-		phi_sq = self.dealiasing_double*fft2(phi_x**2)
+		phi_cube = fft2(phi_x**3)
+		phi_sq = fft2(phi_x**2)
+		np.putmask(phi_cube, self.dealiasing_triple, 0)
+		np.putmask(phi_sq, self.dealiasing_double, 0)
 
 		mu = self.a*(-phi+phi_cube) + self.k*self.ksq*phi
 		birth_death = - self.u*(phi_sq+(self.phi_shift-self.phi_target)*phi)
@@ -84,12 +76,8 @@ class StoEvolutionPS(StoEvolution):
 		return dphidt
 
 	def _noisy_delta(self):
-		dWx = fft2(np.random.normal(0, 1, (self.size, self.size)))
-		dWy = fft2(np.random.normal(0, 1, (self.size, self.size)))
-		dW = fft2(np.random.normal(0, 1, (self.size, self.size)))
-
-		noise = 1j*np.sqrt(2*self.M1*self.epsilon*self.dt)*(self.kx*dWx + self.ky*dWy)
-		noise += np.sqrt(2*self.M2*self.epsilon*self.dt)*dW
+		dW = fft2(np.random.normal(size=(self.size, self.size)))
+		noise = np.sqrt(2*(self.M2+self.ksq*self.M1)*self.epsilon*self.dt)*dW
 		return noise
 
 	def _flat_surface(self, initial_value):
@@ -130,7 +118,7 @@ if __name__ == '__main__':
 	a = 0.2
 	k = 1
 	u = 1e-5
-	phi_t = -0.8
+	phi_t = -0.6
 	phi_shift = 10
 
 	X = 128
@@ -141,8 +129,8 @@ if __name__ == '__main__':
 	initial_value = -0.8
 	flat = False
 
-	for u in [1e-5, 5e-5]:
-		label = 'u_{}_skewed_droplet'.format(u)
+	for phi_t in [-0.6]:
+		label = 'phi_t_{}_skewed_droplet'.format(phi_t)
 		initial_value = phi_t
 
 		start_time = time.time()
