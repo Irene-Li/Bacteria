@@ -139,13 +139,13 @@ if __name__ == '__main__':
 
 	X = 128
 	dx = 1
-	T = 1e3
+	T = 5e4
 	dt = 5e-3
 	n_batches = 100
 	initial_value = 0
-	flat = False
+	flat = True
 
-	for u in [1e-4, 5e-5]:
+	for u in [1e-4]:
 		label = 'u_{}_flat'.format(u)
 		initial_value = phi_t
 
