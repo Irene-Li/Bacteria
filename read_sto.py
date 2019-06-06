@@ -7,8 +7,8 @@ x_size = 200
 u = 1e-5
 
 
-for u in [1e-5, 5e-5]:
-	label = 'u_{}_skewed_droplet'.format(u)
+for phi_t in [-0.6, -0.7]:
+	label = 'phi_t_{}_skewed_droplet'.format(phi_t)
 	solver = StoEvolutionPS()
 	solver.load(label)
 	# solver.print_params()
