@@ -24,9 +24,9 @@ class StoEvolutionPS(StoEvolution):
 			if i % self.batch_size == 0:
 				self.phi[n] = np.real(ifft2(phi))
 				if verbose:
-					print('iteration: {}	mean: {}'.format(i, phi[0, 0]/(self.size**2)))
+					print('iteration: {}	mean: {}'.format(n, phi[0, 0]/(self.size**2)))
 				n += 1
-			phi += self._delta(phi)*self.dt +self._noisy_delta()
+			phi += self._delta(phi)*self.dt + self._noisy_delta()
 
 	def double_droplet_init(self):
 		x = np.arange(self.size)
@@ -66,19 +66,23 @@ class StoEvolutionPS(StoEvolution):
 
 	def _set_up_fftw(self):
 		self.input_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		output = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		self.fft_forward = pyfftw.FFTW(self.input_forward, output, axes=(0, 1))
+		output_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.fft_forward = pyfftw.FFTW(self.input_forward, output_forward,
+										direction='FFTW_FORWARD', axes=(0, 1),
+										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
 		self.input_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		self.fft_backward = pyfftw.FFTW(self.input_backward, output,
-										direction='FFTW_BACKWARD', axes=(0, 1))
+		output_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.fft_backward = pyfftw.FFTW(self.input_backward, output_backward,
+										direction='FFTW_BACKWARD', axes=(0, 1),
+										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
 
 
 	def _delta(self, phi):
-		self.input_backward = phi
+		self.input_backward[:] = phi
 		phi_x = self.fft_backward()
-		self.input_forward = phi_x**2
+		self.input_forward[:] = phi_x*phi_x
 		phi_sq = self.fft_forward()
-		self.input_forward *= phi_x
+		self.input_forward[:] = phi_x**3
 		phi_cube = self.fft_forward()
 		np.putmask(phi_cube, self.dealiasing_triple, 0)
 		np.putmask(phi_sq, self.dealiasing_double, 0)
@@ -90,7 +94,7 @@ class StoEvolutionPS(StoEvolution):
 		return dphidt
 
 	def _noisy_delta(self):
-		self.input_forward = np.random.normal(size=(self.size, self.size))
+		self.input_forward[:] = np.random.normal(size=(self.size, self.size)).astype('complex128')
 		dW = self.fft_forward()
 		noise = np.sqrt(2*(self.M2+self.ksq*self.M1)*self.epsilon*self.dt)*dW
 		return noise
@@ -138,7 +142,7 @@ if __name__ == '__main__':
 
 	X = 128
 	dx = 1
-	T = 1e3
+	T = 5e4
 	dt = 5e-3
 	n_batches = 100
 	initial_value = 0
@@ -153,7 +157,7 @@ if __name__ == '__main__':
 		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
 		solver.save_params(label)
 		solver.print_params()
-		solver.evolve(verbose=False)
+		solver.evolve(verbose=True)
 		solver.save_phi(label)
 		end_time = time.time()
 		print('The simulation took: {}'.format(end_time - start_time))

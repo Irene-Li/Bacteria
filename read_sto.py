@@ -1,14 +1,9 @@
 import numpy as np
 from StoEvolutionPS import *
 
-labels = ['phi_t_-0.8_nuc']
-t_size = 100
-x_size = 200
-u = 1e-5
 
-
-for phi_t in [-0.6, -0.7]:
-	label = 'phi_t_{}_skewed_droplet'.format(phi_t)
+for u in [1e-4, 5e-5]:
+	label = 'u_{}_flat'.format(u)
 	solver = StoEvolutionPS()
 	solver.load(label)
 	# solver.print_params()
