@@ -39,6 +39,15 @@ class PsEvolution(TimeEvolution):
 		plt.savefig('state_{}.pdf'.format(n))
 		plt.close()
 
+	def _set_up_fftw(self):
+		self.input_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		output_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.fft_forward = pyfftw.FFTW(self.input_forward, output_forward, axes=(0, 1))
+		self.input_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		output_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.fft_backward = pyfftw.FFTW(self.input_backward, output_backward,
+										direction='FFTW_BACKWARD', axes=(0, 1))
+
 
 	def _make_complex(self, phi):
 		cutoff = int(self.size/2+1)
@@ -70,9 +79,12 @@ class PsEvolution(TimeEvolution):
 
 	def _delta(self, t, phi):
 		phi_complex = self._make_complex(phi)
-		phi_x = ifft2(phi_complex)
-		phi_cube = fft2(phi_x**3)
-		phi_sq = fft2(phi_x**2)
+		self.input_backward = phi_complex
+		phi_x = self.fft_backward()
+		self.input_forward = phi_x*phi_x
+		phi_sq = self.fft_forward()
+		self.input_forward *= phi_x
+		phi_cube = self.fft_forward()
 		np.putmask(phi_cube, self.dealiasing_triple, 0)
 		np.putmask(phi_sq, self.dealiasing_double, 0)
 
@@ -122,7 +134,7 @@ if __name__ == '__main__':
 	a = 0.2
 	k = 1
 	u = 1e-5
-	phi_t = -0.8
+	phi_t = -0.6
 	phi_shift = 10
 
 	X = 128
@@ -130,7 +142,7 @@ if __name__ == '__main__':
 	T = 1e3
 	dt = 1e-4
 	n_batches = 100
-	initial_value = -0.8
+	initial_value = -0.6
 	flat = False
 
 	for u in [1e-4]:
