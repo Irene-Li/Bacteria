@@ -15,10 +15,10 @@ T = 5e4
 dt = 5e-3
 n_batches = 100
 initial_value = 0
-flat = False
+flat = True 
 
-for phi_t in [-0.6, -0.7]:
-	label = 'phi_t_{}_skewed_droplet'.format(phi_t)
+for phi_t in [-0.6, -0.8]:
+	label = 'phi_t_{}_nuc'.format(phi_t)
 	initial_value = phi_t
 
 	start_time = time.time()

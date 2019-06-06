@@ -4,6 +4,7 @@ from matplotlib import animation as am
 import time
 from scipy.integrate import ode
 from scipy.fftpack import fft2, ifft2, fftfreq
+import pyfftw
 from TimeEvolution import *
 
 
@@ -12,6 +13,7 @@ class PsEvolution(TimeEvolution):
 	def evolve(self, verbose=True):
 		self._make_k_grid()
 		self._make_filters()
+		self._set_up_fftw()
 		self.phi = np.zeros((self.n_batches, self.size, self.size))
 		phi = self.phi_initial
 
@@ -29,7 +31,8 @@ class PsEvolution(TimeEvolution):
 				if i % int(self.batch_size/small_batch) == 0:
 					phi_complex = self._make_complex(phi)
 					self.phi[n] = np.real(ifft2(phi_complex))
-					print('iteration: {}	mean: {}'.format(n, phi[0]/self.size**2))
+					if verbose:
+						print('iteration: {}	mean: {}'.format(n, phi[0]/self.size**2))
 					n += 1
 				phi = r.integrate(r.t+self.dt*small_batch)
 
@@ -42,12 +45,14 @@ class PsEvolution(TimeEvolution):
 	def _set_up_fftw(self):
 		self.input_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
 		output_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		self.fft_forward = pyfftw.FFTW(self.input_forward, output_forward, axes=(0, 1))
+		self.fft_forward = pyfftw.FFTW(self.input_forward, output_forward,
+										direction='FFTW_FORWARD', axes=(0, 1),
+										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
 		self.input_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
 		output_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
 		self.fft_backward = pyfftw.FFTW(self.input_backward, output_backward,
-										direction='FFTW_BACKWARD', axes=(0, 1))
-
+										direction='FFTW_BACKWARD', axes=(0, 1),
+										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
 
 	def _make_complex(self, phi):
 		cutoff = int(self.size/2+1)
@@ -79,11 +84,11 @@ class PsEvolution(TimeEvolution):
 
 	def _delta(self, t, phi):
 		phi_complex = self._make_complex(phi)
-		self.input_backward = phi_complex
+		self.input_backward[:] = phi_complex
 		phi_x = self.fft_backward()
-		self.input_forward = phi_x*phi_x
+		self.input_forward[:] = phi_x*phi_x
 		phi_sq = self.fft_forward()
-		self.input_forward *= phi_x
+		self.input_forward[:] = phi_x**3
 		phi_cube = self.fft_forward()
 		np.putmask(phi_cube, self.dealiasing_triple, 0)
 		np.putmask(phi_sq, self.dealiasing_double, 0)
@@ -95,18 +100,17 @@ class PsEvolution(TimeEvolution):
 		return self._make_real(dphidt_complex)
 
 	def _random_init(self, initial_value):
-		init = np.random.normal(initial_value, np.sqrt(self.dt), (self.size, self.size, 2))
-		init[0, 0, 1] = 0
-		half_point = int(self.size/2+1)
-		init[half_point, half_point, 1] = 0
-		return np.ravel(init)
+		self.input_forward[:] = np.random.normal(size=(self.size, self.size)).astype('complex128')
+		dW = self.fft_forward()
+		noise = self.dt*dW
+		return self._make_real(noise)
 
 	def _sin_surface(self, initial_value):
 		x = np.arange(self.size)
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
-		size = 30
+		size = 25
 		l = np.sqrt(self.k/self.a)
 		phi = - np.tanh((np.sqrt(1.2*(x-midpoint)**2+0.7*(y-midpoint)**2)-size)/l)
 		phi_complex = fft2(phi)
@@ -140,7 +144,7 @@ if __name__ == '__main__':
 	X = 128
 	dx = 1
 	T = 1e3
-	dt = 1e-4
+	dt = 1e-3
 	n_batches = 100
 	initial_value = -0.6
 	flat = False
