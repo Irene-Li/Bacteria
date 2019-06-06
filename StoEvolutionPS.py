@@ -58,8 +58,8 @@ class StoEvolutionPS(StoEvolution):
 
 	def _make_filters(self):
 		kmax = np.max(np.abs(self.kx))
-		filtr = (self.kx > kmax*2/3)
-		filtr2 = (self.kx > kmax*1/2)
+		filtr = (np.abs(self.kx) > kmax*2/3)
+		filtr2 = (np.abs(self.kx) > kmax*1/2)
 
 		self.dealiasing_double = filtr | filtr.T
 		self.dealiasing_triple = filtr2 | filtr2.T
@@ -68,7 +68,6 @@ class StoEvolutionPS(StoEvolution):
 		self.input_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
 		output = pyfftw.empty_aligned((128, 128), dtype='complex128')
 		self.fft_forward = pyfftw.FFTW(self.input_forward, output, axes=(0, 1))
-
 		self.input_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
 		self.fft_backward = pyfftw.FFTW(self.input_backward, output,
 										direction='FFTW_BACKWARD', axes=(0, 1))
@@ -139,22 +138,22 @@ if __name__ == '__main__':
 
 	X = 128
 	dx = 1
-	T = 5e4
+	T = 1e3
 	dt = 5e-3
 	n_batches = 100
 	initial_value = 0
 	flat = True
 
-	for u in [1e-4]:
+	for u in [1e-4, 5e-5]:
 		label = 'u_{}_flat'.format(u)
 		initial_value = phi_t
 
 		start_time = time.time()
 		solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
-		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=False)
+		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
 		solver.save_params(label)
 		solver.print_params()
-		solver.evolve(verbose=True)
+		solver.evolve(verbose=False)
 		solver.save_phi(label)
 		end_time = time.time()
 		print('The simulation took: {}'.format(end_time - start_time))
