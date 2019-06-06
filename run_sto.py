@@ -11,15 +11,14 @@ phi_shift = 10
 
 X = 128
 dx = 1
-T = 5e4
+T = 1e5
 dt = 5e-3
 n_batches = 100
-initial_value = 0
-flat = False
+initial_value = -0.8
+flat = True
 
-for u in [1e-4, 5e-5]:
-	label = 'u_{}_skewed_droplet'.format(u)
-	initial_value = phi_t
+for u in [2e-6]:
+	label = 'u_{}_nuc'.format(u)
 
 	start_time = time.time()
 	solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
