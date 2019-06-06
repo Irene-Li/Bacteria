@@ -41,12 +41,16 @@ class PsEvolution(TimeEvolution):
 
 
 	def _make_complex(self, phi):
-		phi = phi.reshape((self.size, self.size, 2))
-		phi_complex = phi[:, :, 0] + phi[:, :, 1]*1j
+		cutoff = int(self.size/2+1)
+		phi = phi.reshape((self.size, cutoff, 2))
+		phi_complex = np.empty((self.size, self.size), dtype=np.complex128)
+		phi_complex[:, :cutoff] = phi[:, :, 0] + phi[:, :, 1]*1j
+		phi_complex[:, cutoff:] = np.flip(phi_complex[:, 1:cutoff-1], axis=1).conj()
 		return phi_complex
 
 	def _make_real(self, phi_complex):
-		phi = phi_complex.view(np.float64)
+		cutoff = int(self.size/2+1)
+		phi = phi_complex.view(np.float64)[:, :2*cutoff]
 		return np.ravel(phi)
 
 	def _make_k_grid(self):
@@ -58,8 +62,8 @@ class PsEvolution(TimeEvolution):
 
 	def _make_filters(self):
 		kmax = np.max(np.abs(self.kx))
-		filtr = (self.kx > kmax*2/3)
-		filtr2 = (self.kx > kmax*1/2)
+		filtr = (np.abs(self.kx) > kmax*2/3)
+		filtr2 = (np.abs(self.kx) > kmax*1/2)
 
 		self.dealiasing_double = filtr | filtr.T
 		self.dealiasing_triple = filtr2 | filtr2.T
@@ -90,7 +94,7 @@ class PsEvolution(TimeEvolution):
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
-		size = 25
+		size = 30
 		l = np.sqrt(self.k/self.a)
 		phi = - np.tanh((np.sqrt(1.2*(x-midpoint)**2+0.7*(y-midpoint)**2)-size)/l)
 		phi_complex = fft2(phi)
@@ -124,13 +128,13 @@ if __name__ == '__main__':
 	X = 128
 	dx = 1
 	T = 1e3
-	dt = 1e-3
-	n_batches = 1000
+	dt = 1e-4
+	n_batches = 100
 	initial_value = -0.8
 	flat = False
 
-	for u in [1e-5, 1e-4]:
-		label = 'u_{}_skewed_droplet'.format(u)
+	for u in [1e-4]:
+		label = 'u_{}_droplet'.format(u)
 
 		start_time = time.time()
 		solver = PsEvolution(a, k, u, phi_t, phi_shift)
