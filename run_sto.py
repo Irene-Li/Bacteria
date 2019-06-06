@@ -6,7 +6,7 @@ epsilon = 0.1
 a = 0.2
 k = 1
 u = 1e-5
-phi_t = 0
+phi_t = -0.6
 phi_shift = 10
 
 X = 128
@@ -17,8 +17,8 @@ n_batches = 100
 initial_value = 0
 flat = False
 
-for phi_t in [-0.6, -0.8]:
-	label = 'phi_t_{}_skewed_droplet'.format(phi_t)
+for u in [1e-4, 5e-5]:
+	label = 'u_{}_skewed_droplet'.format(u)
 	initial_value = phi_t
 
 	start_time = time.time()
