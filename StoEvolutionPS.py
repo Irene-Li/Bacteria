@@ -6,8 +6,8 @@ import scipy.sparse as sp
 from scipy.fftpack import fft2, ifft2, fftfreq
 import pyfftw
 import json
+from numba import vectorize, complex128
 from StoEvolution import *
-
 
 
 class StoEvolutionPS(StoEvolution):
@@ -24,9 +24,13 @@ class StoEvolutionPS(StoEvolution):
 			if i % self.batch_size == 0:
 				self.phi[n] = np.real(ifft2(phi))
 				if verbose:
-					print('iteration: {}	mean: {}'.format(n, phi[0, 0]/(self.size**2)))
+					print('iteration: {}	mean bd: {}'.format(n, self._mean_bd(self.phi[n])))
 				n += 1
 			phi += self._delta(phi)*self.dt + self._noisy_delta()
+	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, flat=True):
+		super().initialise(X, dx, T, dt, n_batches, initial_value, flat=True)
+		if not flat:
+			self.phi_initial = self._droplet_init(radius)
 
 	def double_droplet_init(self):
 		x = np.arange(self.size)
@@ -76,7 +80,6 @@ class StoEvolutionPS(StoEvolution):
 										direction='FFTW_BACKWARD', axes=(0, 1),
 										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
 
-
 	def _delta(self, phi):
 		self.input_backward[:] = phi
 		phi_x = self.fft_backward()
@@ -104,15 +107,20 @@ class StoEvolutionPS(StoEvolution):
 		phi[0, 0] += initial_value*(self.size)**2
 		return phi
 
-	def _sin_surface(self, initial_value):
+	def _droplet_init(self, radius):
 		x = np.arange(self.size)
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
-		size = 25
 		l = np.sqrt(self.k/self.a)
-		phi = - np.tanh((np.sqrt(1.2*(x-midpoint)**2+0.7*(y-midpoint)**2)-size)/l)
+		phi = - np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)
 		return fft2(phi)
+
+	def plot_slices(self, label):
+		phi = self.phi[-1]
+		for n in range(0, self.size, 20):
+			plt.plot(phi[n])
+		plt.show()
 
 
 	def make_movie(self, label, t_grid=1):
@@ -129,6 +137,7 @@ class StoEvolutionPS(StoEvolution):
 										repeat_delay=1000)
 		mywriter = am.FFMpegWriter()
 		ani.save(label+"_movie.mp4", writer=mywriter)
+		plt.close()
 
 
 if __name__ == '__main__':
@@ -142,14 +151,14 @@ if __name__ == '__main__':
 
 	X = 128
 	dx = 1
-	T = 5e4
+	T = 100
 	dt = 5e-3
 	n_batches = 100
 	initial_value = 0
-	flat = True
+	flat = False
 
-	for u in [1e-4, 5e-5]:
-		label = 'u_{}_flat'.format(u)
+	for u in [5e-5]:
+		label = 'u_{}_test'.format(u)
 		initial_value = phi_t
 
 		start_time = time.time()
@@ -157,7 +166,7 @@ if __name__ == '__main__':
 		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
 		solver.save_params(label)
 		solver.print_params()
-		solver.evolve(verbose=True)
+		solver.evolve(verbose=False)
 		solver.save_phi(label)
 		end_time = time.time()
 		print('The simulation took: {}'.format(end_time - start_time))
