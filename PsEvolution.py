@@ -5,10 +5,10 @@ import time
 from scipy.integrate import ode
 from scipy.fftpack import fft2, ifft2, fftfreq
 import pyfftw
-from TimeEvolution import *
+from StoEvolutionPS import *
 
 
-class PsEvolution(TimeEvolution):
+class PsEvolution(StoEvolutionPS):
 
 	def evolve(self, verbose=True):
 		self._make_k_grid()
@@ -32,27 +32,10 @@ class PsEvolution(TimeEvolution):
 					phi_complex = self._make_complex(phi)
 					self.phi[n] = np.real(ifft2(phi_complex))
 					if verbose:
-						print('iteration: {}	mean: {}'.format(n, phi[0]/self.size**2))
+						print('iteration: {}	mean: {}'.format(n, self._mean_bd(self.phi[n])))
 					n += 1
 				phi = r.integrate(r.t+self.dt*small_batch)
 
-	def _plot_state(self, phi, n):
-		plt.imshow(phi)
-		plt.colorbar()
-		plt.savefig('state_{}.pdf'.format(n))
-		plt.close()
-
-	def _set_up_fftw(self):
-		self.input_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		output_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		self.fft_forward = pyfftw.FFTW(self.input_forward, output_forward,
-										direction='FFTW_FORWARD', axes=(0, 1),
-										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
-		self.input_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		output_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		self.fft_backward = pyfftw.FFTW(self.input_backward, output_backward,
-										direction='FFTW_BACKWARD', axes=(0, 1),
-										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
 
 	def _make_complex(self, phi):
 		cutoff = int(self.size/2+1)
@@ -67,36 +50,9 @@ class PsEvolution(TimeEvolution):
 		phi = phi_complex.view(np.float64)[:, :2*cutoff]
 		return np.ravel(phi)
 
-	def _make_k_grid(self):
-		Nx, Ny = self.size, self.size
-		kx = fftfreq(Nx)*2*np.pi
-		ky = fftfreq(Ny)*2*np.pi
-		self.kx, self.ky = np.meshgrid(kx, ky)
-		self.ksq = self.kx*self.kx + self.ky*self.ky
-
-	def _make_filters(self):
-		kmax = np.max(np.abs(self.kx))
-		filtr = (np.abs(self.kx) > kmax*2/3)
-		filtr2 = (np.abs(self.kx) > kmax*1/2)
-
-		self.dealiasing_double = filtr | filtr.T
-		self.dealiasing_triple = filtr2 | filtr2.T
-
 	def _delta(self, t, phi):
 		phi_complex = self._make_complex(phi)
-		self.input_backward[:] = phi_complex
-		phi_x = self.fft_backward()
-		self.input_forward[:] = phi_x*phi_x
-		phi_sq = self.fft_forward()
-		self.input_forward[:] = phi_x**3
-		phi_cube = self.fft_forward()
-		np.putmask(phi_cube, self.dealiasing_triple, 0)
-		np.putmask(phi_sq, self.dealiasing_double, 0)
-
-		mu = (-self.a+self.k*self.ksq)*phi_complex + self.a*phi_cube
-		birth_death = - self.u*(phi_sq+(self.phi_shift-self.phi_target)*phi_complex)
-		birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
-		dphidt_complex = -self.ksq*mu + birth_death
+		dphidt_complex = super()._delta(phi_complex)
 		return self._make_real(dphidt_complex)
 
 	def _random_init(self, initial_value):
@@ -105,56 +61,33 @@ class PsEvolution(TimeEvolution):
 		noise = self.dt*dW
 		return self._make_real(noise)
 
-	def _sin_surface(self, initial_value):
-		x = np.arange(self.size)
-		y = np.arange(self.size)
-		x, y = np.meshgrid(x, y)
-		midpoint = int(self.size/2)
-		size = 25
-		l = np.sqrt(self.k/self.a)
-		phi = - np.tanh((np.sqrt(1.2*(x-midpoint)**2+0.7*(y-midpoint)**2)-size)/l)
-		phi_complex = fft2(phi)
-		return self._make_real(phi_complex)
-
-	def make_movie(self, label, t_grid=1):
-		fig = plt.figure()
-		ims = []
-		low, high = -1.2, 1.2
-		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True)
-		plt.colorbar(im)
-		for i in range(self.n_batches):
-			xy = self.phi[i]
-			im = plt.imshow(xy, animated=True)
-			ims.append([im])
-		ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
-										repeat_delay=1000)
-		mywriter = am.FFMpegWriter()
-		ani.save(label+"_movie.mp4", writer=mywriter)
+	def _droplet_init(self, radius):
+		init = super()._droplet_init(radius)
+		return self._make_real(init)
 
 
 if __name__ == '__main__':
 
-	epsilon = 0.1
 	a = 0.2
 	k = 1
 	u = 1e-5
-	phi_t = -0.6
+	phi_t = -0.8
 	phi_shift = 10
 
 	X = 128
 	dx = 1
-	T = 1e5
+	T = 1e3
 	dt = 1e-3
-	n_batches = 1000
+	n_batches = 100
 	initial_value = -0.6
 	flat = False
 
-	for u in [1e-4]:
-		label = 'u_{}_droplet'.format(u)
+	for u in [2e-5]:
+		label = 'u_{}_small_droplet'.format(u)
 
 		start_time = time.time()
-		solver = PsEvolution(a, k, u, phi_t, phi_shift)
-		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
+		solver = PsEvolution(0, a, k, u, phi_t, phi_shift)
+		solver.initialise(X, dx, T, dt, n_batches, radius=12, flat=flat)
 		solver.evolve(verbose=True)
 		solver.save(label)
 		end_time = time.time()
