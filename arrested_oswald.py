@@ -2,10 +2,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.special import iv, kn
 
-phi_target = -0.8
+phi_target = -0.7
 phi_shift = 10
 M1 = 1
-alpha = 0.2
+alpha = 0.1
 kappa = 1
 
 plt.axhline(y=0, color='k')
