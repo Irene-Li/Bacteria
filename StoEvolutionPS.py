@@ -32,6 +32,13 @@ class StoEvolutionPS(StoEvolution):
 		if not flat:
 			self.phi_initial = self._droplet_init(radius)
 
+	def continue_evolution(self, T):
+		self.phi_initial = fft2(self.phi[-2])
+		self.T = T
+		self.n_batches = int(self.T/self.step_size+1)
+		self.batch_size = int(self.step_size/self.dt)
+		self.evolve()
+
 	def double_droplet_init(self):
 		x = np.arange(self.size)
 		y = np.arange(self.size)
@@ -131,13 +138,29 @@ class StoEvolutionPS(StoEvolution):
 		plt.colorbar(im)
 		for i in range(self.n_batches):
 			xy = self.phi[i]
-			im = plt.imshow(xy, vmin=low, vmax=high, animated=True)
+			im = plt.imshow(xy, vmin=low, vmax=high, animated=True, cmap='seismic')
 			ims.append([im])
 		ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
 										repeat_delay=1000)
 		mywriter = am.FFMpegWriter()
 		ani.save(label+"_movie.mp4", writer=mywriter)
 		plt.close()
+
+	def make_curve_movie(self, label):
+		fig = plt.figure()
+		phi = (self.phi > 0.5).astype('float64')
+		ims = []
+		for i in range(self.n_batches):
+			xy = phi[i]
+			im = plt.imshow(xy, animated=True)
+			ims.append([im])
+		plt.colorbar(im)
+		ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
+										repeat_delay=1000)
+		mywriter = am.FFMpegWriter()
+		ani.save(label+"_curve_movie.mp4", writer=mywriter)
+		plt.close()
+
 
 
 if __name__ == '__main__':
