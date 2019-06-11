@@ -75,13 +75,13 @@ class StoEvolutionPS(StoEvolution):
 		self.dealiasing_triple = filtr2 | filtr2.T
 
 	def _set_up_fftw(self):
-		self.input_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		output_forward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.input_forward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
+		output_forward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
 		self.fft_forward = pyfftw.FFTW(self.input_forward, output_forward,
 										direction='FFTW_FORWARD', axes=(0, 1),
 										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
-		self.input_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
-		output_backward = pyfftw.empty_aligned((128, 128), dtype='complex128')
+		self.input_backward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
+		output_backward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
 		self.fft_backward = pyfftw.FFTW(self.input_backward, output_backward,
 										direction='FFTW_BACKWARD', axes=(0, 1),
 										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
