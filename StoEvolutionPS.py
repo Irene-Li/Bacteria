@@ -6,7 +6,6 @@ import scipy.sparse as sp
 from scipy.fftpack import fft2, ifft2, fftfreq
 import pyfftw
 import json
-from numba import vectorize, complex128
 from StoEvolution import *
 
 
@@ -27,10 +26,10 @@ class StoEvolutionPS(StoEvolution):
 					print('iteration: {}	mean bd: {}'.format(n, self._mean_bd(self.phi[n])))
 				n += 1
 			phi += self._delta(phi)*self.dt + self._noisy_delta()
-	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, flat=True):
+	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, skew=0, flat=True):
 		super().initialise(X, dx, T, dt, n_batches, initial_value, flat=True)
 		if not flat:
-			self.phi_initial = self._droplet_init(radius)
+			self.phi_initial = self._droplet_init(radius, skew)
 
 	def continue_evolution(self, T):
 		self.phi_initial = fft2(self.phi[-2])
@@ -114,13 +113,16 @@ class StoEvolutionPS(StoEvolution):
 		phi[0, 0] += initial_value*(self.size)**2
 		return phi
 
-	def _droplet_init(self, radius):
+	def _droplet_init(self, radius, skew):
 		x = np.arange(self.size)
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
 		l = np.sqrt(self.k/self.a)
-		phi = - np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)
+		x_skew = (1-skew)**2
+		y_skew = (1+skew)**2
+		phi = 0.7*(- np.tanh((np.sqrt(x_skew*(x-midpoint)**2+y_skew*(y-midpoint)**2)-radius)/l)+1)
+		phi += self.phi_target
 		return fft2(phi)
 
 	def plot_slices(self, label):
