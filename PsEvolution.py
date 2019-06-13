@@ -37,7 +37,7 @@ class PsEvolution(StoEvolutionPS):
 				phi = r.integrate(r.t+self.dt*small_batch)
 
 	def continue_evolution(self, T):
-		self.phi_initial = self._make_complex(fft2(self.phi[-2]))
+		self.phi_initial = self._make_real(fft2(self.phi[-2]))
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
