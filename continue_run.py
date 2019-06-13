@@ -2,8 +2,8 @@ import time
 import numpy as np
 from StoEvolutionPS import *
 
-old_label = 'phi_t_-0.6_skewed_droplet'
-new_label= 'phi_t_-0.6_skewed_droplet_2'
+old_label = 'phi_t_-0.6_skewed_droplet_2'
+new_label= 'phi_t_-0.6_skewed_droplet_3'
 
 T = 5e4
 
