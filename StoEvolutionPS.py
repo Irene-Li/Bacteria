@@ -149,6 +149,25 @@ class StoEvolutionPS(StoEvolution):
 		ani.save(label+"_movie.mp4", writer=mywriter)
 		plt.close()
 
+	def make_bd_movie(self, label):
+		fig = plt.figure()
+		bd = - (self.phi+self.phi_shift)*(self.phi-self.phi_target)
+		high = max(-np.min(bd), np.max(bd))
+		low = -high 
+		ims = []
+		im = plt.imshow(bd[0], vmin=low, vmax=high, animated=True, cmap='seismic')
+		plt.colorbar(im)
+		for i in range(self.n_batches):
+			xy = bd[i]
+			im = plt.imshow(xy, vmin=low, vmax=high, animated=True, cmap='seismic')
+			ims.append([im])
+		ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
+										repeat_delay=1000)
+		mywriter = am.FFMpegWriter()
+		ani.save(label+"_bd_movie.mp4", writer=mywriter)
+		plt.close()
+
+
 	def make_curve_movie(self, label):
 		fig = plt.figure()
 		phi = (self.phi > 0.5).astype('float64')

@@ -2,13 +2,13 @@ import time
 import numpy as np
 from StoEvolutionPS import *
 
-old_label = 'phi_t_-0.6_skewed_droplet_2'
-new_label= 'phi_t_-0.6_skewed_droplet_3'
+old_label = 'phi_t_-0.7_l=2'
+new_label= 'phi_t_-0.7_l=2_2'
 
-T = 5e4
+T = 2e4
 
 start_time = time.time()
-solver = StoEvolutionPS()
+solver = PsEvolution()
 solver.load(old_label)
 solver.continue_evolution(T)
 solver.save(new_label)
