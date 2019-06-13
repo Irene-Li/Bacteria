@@ -61,8 +61,8 @@ class PsEvolution(StoEvolutionPS):
 		noise = self.dt*dW
 		return self._make_real(noise)
 
-	def _droplet_init(self, radius):
-		init = super()._droplet_init(radius)
+	def _droplet_init(self, radius, skew):
+		init = super()._droplet_init(radius, skew)
 		return self._make_real(init)
 
 
@@ -70,24 +70,24 @@ if __name__ == '__main__':
 
 	a = 0.2
 	k = 1
-	u = 1e-5
-	phi_t = -0.8
+	u = 5e-5
+	phi_t = -0.6
 	phi_shift = 10
 
 	X = 128
 	dx = 1
-	T = 1e3
+	T = 1e2
 	dt = 1e-3
 	n_batches = 100
 	initial_value = -0.6
 	flat = False
 
-	for u in [2e-5]:
-		label = 'u_{}_small_droplet'.format(u)
+	for phi_t in [-0.6]:
+		label = 'phi_t_{}_l=2'.format(phi_t)
 
 		start_time = time.time()
 		solver = PsEvolution(0, a, k, u, phi_t, phi_shift)
-		solver.initialise(X, dx, T, dt, n_batches, radius=12, flat=flat)
+		solver.initialise(X, dx, T, dt, n_batches, radius=10, skew=3, flat=flat)
 		solver.evolve(verbose=True)
 		solver.save(label)
 		end_time = time.time()

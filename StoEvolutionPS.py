@@ -119,9 +119,10 @@ class StoEvolutionPS(StoEvolution):
 		x, y = np.meshgrid(x, y)
 		midpoint = int(self.size/2)
 		l = np.sqrt(self.k/self.a)
-		x_skew = (1-skew)**2
-		y_skew = (1+skew)**2
-		phi = 0.7*(- np.tanh((np.sqrt(x_skew*(x-midpoint)**2+y_skew*(y-midpoint)**2)-radius)/l)+1)
+		theta = np.arctan((y-midpoint)/(x-midpoint))
+		radius = radius + skew*np.cos(theta*2)
+		phi = 0.7*(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
+		phi[midpoint, midpoint] = 0.7*2
 		phi += self.phi_target
 		return fft2(phi)
 
@@ -136,7 +137,7 @@ class StoEvolutionPS(StoEvolution):
 		fig = plt.figure()
 		low, high = -1.2, 1.2
 		ims = []
-		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True)
+		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True, cmap='seismic')
 		plt.colorbar(im)
 		for i in range(self.n_batches):
 			xy = self.phi[i]
