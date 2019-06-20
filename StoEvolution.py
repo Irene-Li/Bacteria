@@ -72,14 +72,12 @@ class StoEvolution(FdEvolution):
 		self.M1 = 1/self.k
 		self.M2 = self.u*(self.phi_shift+self.phi_target/2)
 
-	def save_phi(self, label, path=''):
+	def save_phi(self, label):
 		filename = "{}_data.npy".format(label)
-		filename = os.path.join(path, filename)
 		np.save(filename, self.phi)
 
-	def load_phi(self, label, path=''):
+	def load_phi(self, label):
 		filename = "{}_data.npy".format(label)
-		filename = os.path.join(path, filename)
 		self.phi = np.load(filename)
 
 	def save(self, label):
