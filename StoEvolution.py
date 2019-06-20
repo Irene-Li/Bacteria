@@ -91,20 +91,16 @@ class StoEvolution(FdEvolution):
 	def evolve(self, verbose=True):
 		self.phi = np.zeros((self.n_batches, self.size))
 		self._make_laplacian_matrix()
-		self._make_gradient_matrix()
-		r = ode(self._delta).set_integrator('lsoda', atol=1e-8)
-		r.set_initial_value(self.phi_initial, 0)
-
+		self._make_laplacian_fourier()
+		phi = self.phi_initial
 		n = 0
 		for i in range(int(self.T/self.dt)):
-			if r.successful():
-				if i % self.batch_size == 0:
-					self.phi[n] = r.y
-					if verbose:
-						print('iteration: {}	mean: {}'.format(i, np.mean(r.y)))
-					n += 1
-				r.set_initial_value(r.y + self._noisy_delta(), r.t)
-				r.integrate(r.t+self.dt)
+			if i % self.batch_size == 0:
+				self.phi[n] = phi
+				if verbose:
+					print('iteration: {}	mean: {}'.format(n, np.mean(phi)))
+				n += 1
+			phi += self._delta(phi)*self.dt+self._noisy_delta()
 
 	def _modify_params(self):
 		length_ratio = self.dx
@@ -143,36 +139,30 @@ class StoEvolution(FdEvolution):
 	def _flat_surface(self, initial_value):
 		return np.zeros((self.size)) + initial_value
 
-	def _delta(self, t, phi):
+	def _delta(self, phi):
 		mu = self.a * (- phi + phi**3) - self.k * self._laplacian(phi)
 		birth_death = - self.u * (phi + self.phi_shift) * (phi - self.phi_target)
 		dphidt = self.M1 * self._laplacian(mu) + birth_death
 		return dphidt
 
-	def _make_gradient_matrix(self):
-		n = int(self.size/2)
+	def _make_laplacian_fourier(self):
+		n = int(self.size/2+1)
 		x = np.arange(n)
 		self._laplacian_fourier = - 2 * (1 - np.cos(2 * np.pi * x/self.size))
-		self._gradient_fourier = np.sqrt(- laplacian_fourier)
 
 	def _noisy_delta(self):
 		# noise of the conservative dynamics
 		dW = np.random.normal(0.0, np.sqrt(self.epsilon*self.dt*self.size), self.size)
-		dW[0] *= np.sqrt(2)
-		dW[-1] *= np.sqrt(2)
-		noise_fourier[1:self.size-1:2] = np.sqrt(-self.M1*self._laplacian_fourier[1:] + self.M2)*dW[2:self.size-1:2]
-		noise_fourier[2:self.size-1:2] = np.sqrt(-self.M1*self._laplacian_fourier[1:] + self.M2)*dW[1:self.size-1:2]
+		dW[0]*=np.sqrt(2)
+		dW[-1]*=np.sqrt(2)
+		noise_fourier = np.empty((self.size), dtype=np.float64)
+		noise_fourier[0] = dW[0]*np.sqrt(self.M2)
+		noise_fourier[1::2] = np.sqrt(-self.M1*self._laplacian_fourier[1:] + self.M2)*dW[1::2]
+		noise_fourier[2:self.size-1:2] = np.sqrt(-self.M1*self._laplacian_fourier[1:-1] + self.M2)*dW[2:self.size-1:2]
 		return irfft(noise_fourier)
 
 	def _random_init(self, initial_value):
 		phi_initial = initial_value + np.zeros((self.size))
-		nsteps = int(self.a+10)
-		r = ode(self._delta).set_integrator('lsoda', atol=1e-10, nsteps=nsteps)
-		r.set_initial_value(phi_initial, 0)
-
-		r.integrate(self.dt/2)
-		r.set_initial_value(r.y + self._noisy_delta(), r.t)
-		phi_initial = r.integrate(self.dt)
 		return phi_initial
 
 	def evolve_trajectories(self, n):
@@ -189,59 +179,3 @@ class StoEvolution(FdEvolution):
 	def load_trajs(self, label):
 		self.phi_trajs = np.load('{}_trajs.npy'.format(label))
 		self.phi = np.mean(self.phi_trajs, axis=0)
-
-	def _compute_Fourier_components(self):
-		# Extract the midpoints
-		traj = (np.roll(self.phi_trajs, 1, axis=-1) + self.phi_trajs)/2
-		traj = traj[:, :, 3:-2]
-
-		# Extract the shape of phi and add 1 to the spatial axis
-		x_size = int(traj.shape[-1]/2 + 1)
-		shape = (traj.shape[0], traj.shape[1], x_size)
-
-		# Fourier transform the midpoints
-		phi_k = rfft(traj, axis=-1)
-		S = np.zeros(shape)
-
-		S[:, :, 0] = phi_k[:, :, 0] **2
-		S[:, :, -1] = phi_k[:, :, -1]**2
-		S[:, :, 1:-1] = (phi_k[:, :, 1:-2:2]**2 + phi_k[:, :, 2:-1:2]**2)
-
-		S = np.mean(S, axis=0)
-		return S
-
-
-	def plot_fourier_components(self, label, truncate=True):
-		# read in the structure factor
-		S = self._compute_Fourier_components()
-
-		# make axis for the third plot
-		q_c = np.sqrt(self.a/self.k/2)
-		t = np.linspace(0, self.T, self.n_batches)
-		q = np.arange(0, 2*q_c, 2*np.pi/(self.X-self.dx))
-		r = - self.u + self.a * q**2 - self.k * q**4
-
-		# Truncate until we only have the first few compnents left
-		if truncate:
-			q_c = np.sqrt(self.a/self.k/2)
-			q_size = int(2*q_c/(2*np.pi/(self.X-self.dx)))
-			S = S[:, :q_size+1]
-
-		plt.rc('text', usetex=True)
-		plt.rc('font', family='serif')
-		f, (ax1, ax2) = plt.subplots(2)
-
-		for i in range(1, S.shape[-1]):
-			ax1.plot(t, np.log(S[:, i]), label=r'$q_{}$'.format(i))
-		ax1.legend()
-		ax1.set_title(r'Average structure factor')
-		ax1.set_xlabel(r't')
-		ax1.set_ylabel(r'S')
-
-		ax2.plot(q, r)
-		ax2.set_ylim([-max(r), max(r)])
-		ax2.set_xlabel(r'q')
-		ax2.set_ylabel(r'rate')
-		plt.tight_layout()
-		plt.savefig('{}_sf.pdf'.format(label))
-		plt.close()
