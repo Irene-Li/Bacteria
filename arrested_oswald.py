@@ -1,15 +1,20 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.special import iv, kn
+from scipy.optimize import root_scalar
 
-phi_target = -0.9
+# Define the other parameters
 phi_shift = 10
 M1 = 1
 alpha = 0.2
 kappa = 1
-u = 1e-6
-
 sigma = np.sqrt(8*kappa*alpha/9)
+
+
+# Plot single stability graph
+phi_target = -0.6
+u = 7e-5
+
 gradient_dense = - u*(2 + phi_shift - phi_target)
 gradient_dilute = - u*(-2+phi_shift - phi_target)
 f_dense = - u*(1+phi_shift)*(1-phi_target)
@@ -22,32 +27,34 @@ k = np.sqrt(-gradient_dense/D)
 l = np.sqrt(-gradient_dilute/D)
 gamma = sigma/(4*alpha)
 
-R = np.arange(10, 0.8/l, 0.01)
+# Find the stable radius
+def growth_rate(R):
+    J_plus = - k*(gamma/R - A_dense)*iv(1, k*R)/iv(0, k*R)
+    J_minus = l*(gamma/R - A_dilute)*kn(1, l*R)/kn(0, l*R)
+    return J_plus - J_minus
 
-J_plus = k*(gamma/R - A_dense)*iv(1, k*R)/iv(0, k*R)
-J_plus_approx = (gamma/R - A_dense)*k*k*R/2
-J_minus = - l*(gamma/R - A_dilute)*kn(1, l*R)/kn(0, l*R)
-J_minus_approx = - (gamma/R - A_dilute)/(- np.log(l*R)*R)
+def g_v(v, R):
+    b0_dense = (gamma/R - A_dense)/iv(0, k*R)
+    b0_dilute = (gamma/R - A_dilute)/kn(0, l*R)
 
-def g(v):
     extra_term = gamma*(v*v-1)/R**2
-    term1 = (gamma/R - A_dense)*(k - iv(1,k*R)/(R*iv(0,k*R)))
-    term2 = (gamma/R - A_dilute)*(l - kn(1, l*R)/(R*kn(0,l*R)))
-    term3 = (k*iv(v-1,k*R)/iv(v,k*R)-v/R)*(extra_term - J_plus)
-    term4 = (l*kn(v-1,l*R)/kn(v,l*R)-v/R)*(extra_term - J_minus)
-    return term1+term2+term3-term4
 
-def h(v):
-    return v/R * (-J_minus + J_plus)
+    term1 = b0_dense*k*k*(iv(0,k*R) - iv(1,k*R)/(k*R))
+    term2 = -b0_dilute*l*l*(kn(0,l*R) - kn(1,l*R)/(l*R))
+    term3 = (k*iv(v-1,k*R)/iv(v,k*R)-v/R)*(extra_term - b0_dense*k*iv(1, k*R))
+    term4 = (l*kn(v-1,l*R)/kn(v,l*R)-v/R)*(extra_term + b0_dilute*l*kn(1, l*R))
 
+    return -term1+term2-term3+term4
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif', size=15)
 plt.axhline(y=0, color='k')
-plt.plot(R, J_minus-J_plus, label='u={}'.format(u))
-# plt.plot(R, (J_minus_approx - J_plus_approx), '--', label='approx u={}'.format(u))
-plt.plot(R, g(2), label='g')
-plt.plot(R, h(2), label='h')
-
+R = np.arange(1, 1/l, 0.1)
+plt.plot(R, growth_rate(R), label=r'Spherical mode')
+plt.plot(R, g_v(2, R), label=r'$l=2$ mode')
+plt.ylim([-0.01, 0.03])
+plt.xlabel(r'R')
+plt.ylabel(r'growth rate')
+plt.title(r'Growth rate for $\phi_t = {}, u = {}$'.format(phi_target, u))
 plt.legend()
-plt.title('phi_t ={}, alpha = {}'.format(phi_target, alpha))
-plt.xlabel('R')
-plt.ylabel('growth rate')
+plt.tight_layout()
 plt.savefig('arrested_oswald.pdf')
