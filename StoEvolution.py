@@ -6,6 +6,7 @@ from TimeEvolution import TimeEvolution
 from FdEvolution import FdEvolution
 import json
 import scipy.sparse as sp
+import os
 
 
 class StoEvolution(FdEvolution):
@@ -71,11 +72,15 @@ class StoEvolution(FdEvolution):
 		self.M1 = 1/self.k
 		self.M2 = self.u*(self.phi_shift+self.phi_target/2)
 
-	def save_phi(self, label):
-		np.save("{}_data.npy".format(label), self.phi)
+	def save_phi(self, label, path=''):
+		filename = "{}_data.npy".format(label)
+		filename = os.path.join(path, filename)
+		np.save(filename, self.phi)
 
-	def load_phi(self, label):
-		self.phi = np.load('{}_data.npy'.format(label))
+	def load_phi(self, label, path=''):
+		filename = "{}_data.npy".format(label)
+		filename = os.path.join(path, filename)
+		self.phi = np.load(filename)
 
 	def save(self, label):
 		self.save_params(label)
