@@ -16,7 +16,7 @@ phi_shift = 10
 
 X = 128
 dx = 1
-T = 10
+T = 50
 dt = 5e-3
 n_batches = 10
 initial_value = -0.8
@@ -38,16 +38,16 @@ phi = evolve(init, a, k, u, phi_shift, phi_t, epsilon, dt, nitr, batch_size, X)
 end_time = time.time()
 print('The simulation took: {}'.format(end_time - start_time))
 
-fig = plt.figure()
-low, high = -1.2, 1.2
-ims = []
-im = plt.imshow(phi[0], vmin=low, vmax=high, animated=True)
-plt.colorbar(im)
-for i in range(n_batches):
-	xy = phi[i]
-	im = plt.imshow(xy, vmin=low, vmax=high, animated=True)
-	ims.append([im])
-ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
-								repeat_delay=1000)
-mywriter = am.FFMpegWriter()
-ani.save("movie.mp4", writer=mywriter)
+# fig = plt.figure()
+# low, high = -1.2, 1.2
+# ims = []
+# im = plt.imshow(phi[0], vmin=low, vmax=high, animated=True)
+# plt.colorbar(im)
+# for i in range(n_batches):
+# 	xy = phi[i]
+# 	im = plt.imshow(xy, vmin=low, vmax=high, animated=True)
+# 	ims.append([im])
+# ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
+# 								repeat_delay=1000)
+# mywriter = am.FFMpegWriter()
+# ani.save("movie.mp4", writer=mywriter)
