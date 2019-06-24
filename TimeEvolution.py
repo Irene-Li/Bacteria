@@ -100,7 +100,7 @@ class TimeEvolution:
 		return np.sum(bool_array)/2
 
 
-	def plot_evolution(self, t_size, x_size, label):
+	def plot_evolution(self, label, t_size=100, x_size=100):
 		(t_size_old, x_size_old) = self.phi.shape
 		t_grid_size = int(np.ceil(t_size_old/t_size))
 		x_grid_size = int(np.ceil(x_size_old/x_size))

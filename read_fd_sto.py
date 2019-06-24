@@ -1,11 +1,10 @@
 import numpy as np
 from StoEvolution import *
 
-
-label = 'u_1e-05_ep_0.01'
-solver = StoEvolution()
-solver.load(label)
-solver.plot_evolution(100, 100, label)
-# solver.make_movie(label)
-# solver.make_bd_movie(label)
-# solver.plot_slices(label)
+epsilon = 0.01
+rates = [5e-5, 1e-4]
+for u in rates:
+    label = 'u_{}_ep_{}'.format(u, epsilon)
+    solver = StoEvolution()
+    solver.load(label)
+    solver.plot_evolution(label, t_size=100, x_size=200)
