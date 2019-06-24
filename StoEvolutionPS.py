@@ -153,7 +153,7 @@ class StoEvolutionPS(StoEvolution):
 		fig = plt.figure()
 		bd = - (self.phi+self.phi_shift)*(self.phi-self.phi_target)
 		high = max(-np.min(bd), np.max(bd))
-		low = -high 
+		low = -high
 		ims = []
 		im = plt.imshow(bd[0], vmin=low, vmax=high, animated=True, cmap='seismic')
 		plt.colorbar(im)
