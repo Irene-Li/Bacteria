@@ -16,7 +16,7 @@ phi_shift = 10
 
 X = 128
 dx = 1
-T = 50
+T = 10
 dt = 5e-3
 n_batches = 10
 initial_value = -0.8
