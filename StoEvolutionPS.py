@@ -7,11 +7,21 @@ from scipy.fftpack import fft2, ifft2, fftfreq
 import pyfftw
 import json
 from StoEvolution import *
+from pseudospectral import evolve_sto_ps
 
 
 class StoEvolutionPS(StoEvolution):
 
-	def evolve(self, verbose=True):
+	def evolve(self, verbose=True, cython=True):
+		if cython:
+			nitr = int(self.T/self.dt)
+			self.phi = evolve_sto_ps(self.phi_initial, self.a, self.k, self.u,
+										self.phi_shift, self.phi_target, self.epsilon,
+										self.dt, nitr, self.n_batches, self.X)
+		else:
+			self.naive_evolve(verbose)
+
+	def naive_evolve(self, verbose):
 		self._make_k_grid()
 		self._make_filters()
 		self._set_up_fftw()
@@ -26,6 +36,8 @@ class StoEvolutionPS(StoEvolution):
 					print('iteration: {}	mean bd: {}'.format(n, self._mean_bd(self.phi[n])))
 				n += 1
 			phi += self._delta(phi)*self.dt + self._noisy_delta()
+
+
 	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, skew=0, flat=True):
 		super().initialise(X, dx, T, dt, n_batches, initial_value, flat=True)
 		if not flat:
@@ -85,21 +97,24 @@ class StoEvolutionPS(StoEvolution):
 		self.fft_backward = pyfftw.FFTW(self.input_backward, output_backward,
 										direction='FFTW_BACKWARD', axes=(0, 1),
 										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
+		self.phi_sq = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
+		self.phi_cube = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
 
 	def _delta(self, phi):
 		self.input_backward[:] = phi
 		phi_x = self.fft_backward()
 		self.input_forward[:] = phi_x*phi_x
-		phi_sq = self.fft_forward()
+		self.phi_sq[:] = self.fft_forward()
 		self.input_forward[:] = phi_x**3
-		phi_cube = self.fft_forward()
-		np.putmask(phi_cube, self.dealiasing_triple, 0)
-		np.putmask(phi_sq, self.dealiasing_double, 0)
+		self.phi_cube[:] = self.fft_forward()
+		np.putmask(self.phi_cube, self.dealiasing_triple, 0)
+		np.putmask(self.phi_sq, self.dealiasing_double, 0)
 
-		mu = self.a*(-phi+phi_cube) + self.k*self.ksq*phi
-		birth_death = - self.u*(phi_sq+(self.phi_shift-self.phi_target)*phi)
+		mu = self.a*(-phi+self.phi_cube) + self.k*self.ksq*phi
+		birth_death = - self.u*(self.phi_sq+(self.phi_shift-self.phi_target)*phi)
 		birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
 		dphidt = -self.M1*self.ksq*mu + birth_death
+		print(birth_death[0,0])
 		return dphidt
 
 	def _noisy_delta(self):
