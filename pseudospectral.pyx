@@ -1,28 +1,16 @@
 import numpy as np
-import pyfftw
+import mkl_fft
 cimport numpy as np
 cimport cython
+from cython.view cimport array
 from libc.math cimport sqrt, fmin, M_PI, ceil
-
-@cython.wraparound(False)
-@cython.boundscheck(False)
-def generate_fftw_obj(np.ndarray[np.complex128_t, ndim=2] input, np.ndarray[np.complex128_t, ndim=2] output, int size, forward=True):
-	input = pyfftw.empty_aligned((size, size), dtype='complex128')
-	output = pyfftw.empty_aligned((size, size), dtype='complex128')
-	if forward:
-		dir = 'FFTW_FORWARD'
-	else:
-		dir = 'FFTW_BACKWARD'
-	return pyfftw.FFTW(input, output, direction=dir, axes=(0, 1),
-										flags=['FFTW_MEASURE']), input, output
-
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
 def evolve_sto_ps(np.complex128_t [:, :] init, double a, double k, double u, double phi_s, double phi_t, double epsilon, double dt, int nitr, int n_batches, int size):
 	cdef np.float64_t [:, :, :] phi_evol
-	cdef np.ndarray[np.complex128_t, ndim=2] phi, phi_cube, phi_sq, dW
-	cdef np.ndarray[np.complex128_t, ndim=2] phi_x, phi_x_cube, phi_x_sq, dW_x
+	cdef np.complex128_t [:, :] phi, phi_cube, phi_sq, dW
+	cdef np.complex128_t [:, :] phi_x, phi_x_cube, phi_x_sq
 	cdef Py_ssize_t n, i, j, m, batch_size
 	cdef double M1, M2
 	cdef double kmax_half, kmax_two_thirds, kx, ky, ksq, factor
@@ -35,31 +23,16 @@ def evolve_sto_ps(np.complex128_t [:, :] init, double a, double k, double u, dou
 	kmax_two_thirds = M_PI*2.0/3.0
 	factor = M_PI*2.0/size
 
-	phi_x = pyfftw.empty_aligned((size, size), dtype='complex128')
-	phi = pyfftw.empty_aligned((size, size), dtype='complex128')
-	phi_x_sq = pyfftw.empty_aligned((size, size), dtype='complex128')
-	phi_sq = pyfftw.empty_aligned((size, size), dtype='complex128')
-	phi_x_cube = pyfftw.empty_aligned((size, size), dtype='complex128')
-	phi_cube = pyfftw.empty_aligned((size, size), dtype='complex128')
-	dW_x = pyfftw.empty_aligned((size, size), dtype='complex128')
-	dW = pyfftw.empty_aligned((size, size), dtype='complex128')
+	phi_x_sq = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	phi_x_cube = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
 
-	cube_obj = pyfftw.FFTW(phi_x_cube, phi_cube, axes=(0, 1),
-										flags=['FFTW_MEASURE'])
-	sq_obj = pyfftw.FFTW(phi_x_sq, phi_sq, axes=(0, 1),
-										flags=['FFTW_MEASURE'])
-	phi_obj = pyfftw.FFTW(phi, phi_x, axes=(0, 1),
-										flags=['FFTW_MEASURE'], direction='FFTW_BACKWARD')
-	noise_obj = pyfftw.FFTW(dW_x, dW, axes=(0, 1),
-										flags=['FFTW_MEASURE'])
-
-	phi[:] = init
-
+	phi = init
 	batch_size = int(nitr/n_batches)
 	phi_evol = np.empty((n_batches, size, size), dtype='float64')
 	n = 0
 	for i in xrange(nitr):
-		phi_obj(normalise_idft=True)
+		phi_x = mkl_fft.ifft2(phi)
+
 		if i % batch_size == 0:
 			for j in xrange(size):
 				for m in xrange(size):
@@ -73,11 +46,9 @@ def evolve_sto_ps(np.complex128_t [:, :] init, double a, double k, double u, dou
 				phi_x_sq[j,m] = temp*temp
 				phi_x_cube[j,m] = temp*temp*temp
 
-		cube_obj.execute()
-		sq_obj.execute()
-		dW_x[:] = np.random.normal(size=(size, size)).astype('complex128')
-		noise_obj.execute()
-
+		phi_cube = mkl_fft.fft2(phi_x_cube)
+		phi_sq = mkl_fft.fft2(phi_x_sq)
+		dW = mkl_fft.fft2(np.random.normal(size=(size, size)).astype('complex128'))
 
 		for j in xrange(size):
 			for m in xrange(size):
