@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from matplotlib import animation as am
 import time
 import scipy.sparse as sp
-from scipy.fftpack import fft2, ifft2, fftfreq
-import pyfftw
+from scipy.fftpack import fftfreq
 import json
 from StoEvolution import *
 from pseudospectral import evolve_sto_ps
+import mkl_fft
 
 
 class StoEvolutionPS(StoEvolution):
@@ -24,14 +24,13 @@ class StoEvolutionPS(StoEvolution):
 	def naive_evolve(self, verbose):
 		self._make_k_grid()
 		self._make_filters()
-		self._set_up_fftw()
 		self.phi = np.zeros((self.n_batches, self.size, self.size))
 		phi = self.phi_initial
 
 		n = 0
 		for i in range(int(self.T/self.dt)):
 			if i % self.batch_size == 0:
-				self.phi[n] = np.real(ifft2(phi))
+				self.phi[n] = np.real(mkl_fft.ifft2(phi))
 				if verbose:
 					print('iteration: {}	mean bd: {}'.format(n, self._mean_bd(self.phi[n])))
 				n += 1
@@ -44,7 +43,7 @@ class StoEvolutionPS(StoEvolution):
 			self.phi_initial = self._droplet_init(radius, skew)
 
 	def continue_evolution(self, T):
-		self.phi_initial = fft2(self.phi[-2])
+		self.phi_initial = mkl_fft.fft2(self.phi[-2])
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
@@ -63,7 +62,7 @@ class StoEvolutionPS(StoEvolution):
 		phi1 = - np.tanh((np.sqrt((x-midpoint1)**2+(y-midpoint1)**2)-size1)/l)+1
 		phi2 = - np.tanh((np.sqrt((x-midpoint2)**2+(y-midpoint2)**2)-size2)/l)+1
 		phi = phi1+phi2-1
-		self.phi_initial = fft2(phi)
+		self.phi_initial = mkl_fft.fft2(phi)
 
 	def _plot_state(self, phi, n):
 		plt.imshow(phi)
@@ -86,27 +85,10 @@ class StoEvolutionPS(StoEvolution):
 		self.dealiasing_double = filtr | filtr.T
 		self.dealiasing_triple = filtr2 | filtr2.T
 
-	def _set_up_fftw(self):
-		self.input_forward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
-		output_forward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
-		self.fft_forward = pyfftw.FFTW(self.input_forward, output_forward,
-										direction='FFTW_FORWARD', axes=(0, 1),
-										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
-		self.input_backward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
-		output_backward = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
-		self.fft_backward = pyfftw.FFTW(self.input_backward, output_backward,
-										direction='FFTW_BACKWARD', axes=(0, 1),
-										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
-		self.phi_sq = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
-		self.phi_cube = pyfftw.empty_aligned((self.size, self.size), dtype='complex128')
-
 	def _delta(self, phi):
-		self.input_backward[:] = phi
-		phi_x = self.fft_backward()
-		self.input_forward[:] = phi_x*phi_x
-		self.phi_sq[:] = self.fft_forward()
-		self.input_forward[:] = phi_x**3
-		self.phi_cube[:] = self.fft_forward()
+		phi_x = mkl_fft.ifft2(phi)
+		self.phi_sq = mkl_fft.fft2(phi_x**2)
+		self.phi_cube = mkl_fft.fft2(phi_x**3)
 		np.putmask(self.phi_cube, self.dealiasing_triple, 0)
 		np.putmask(self.phi_sq, self.dealiasing_double, 0)
 
@@ -114,12 +96,10 @@ class StoEvolutionPS(StoEvolution):
 		birth_death = - self.u*(self.phi_sq+(self.phi_shift-self.phi_target)*phi)
 		birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
 		dphidt = -self.M1*self.ksq*mu + birth_death
-		print(birth_death[0,0])
 		return dphidt
 
 	def _noisy_delta(self):
-		self.input_forward[:] = np.random.normal(size=(self.size, self.size)).astype('complex128')
-		dW = self.fft_forward()
+		dW = mkl_fft.fft2(np.random.normal(size=(self.size, self.size)).astype('complex128'))
 		noise = np.sqrt(2*(self.M2+self.ksq*self.M1)*self.epsilon*self.dt)*dW
 		return noise
 
@@ -139,7 +119,7 @@ class StoEvolutionPS(StoEvolution):
 		phi = 0.7*(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
 		phi[midpoint, midpoint] = 0.7*2
 		phi += self.phi_target
-		return fft2(phi)
+		return mkl_fft.fft2(phi)
 
 	def plot_slices(self, label):
 		phi = self.phi[-1]
