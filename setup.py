@@ -5,9 +5,10 @@ import numpy
 import pyfftw
 
 ext = [Extension("pseudospectral", sources=['pseudospectral.pyx'],
-	 include_dirs=[numpy.get_include()])]
+	 include_dirs=[numpy.get_include()])
+	 ]
 
 setup(
 	name = 'pseudospectral',
-	ext_modules = cythonize(ext, annotate=True),
+	ext_modules = cythonize(ext, annotate=True)
 )

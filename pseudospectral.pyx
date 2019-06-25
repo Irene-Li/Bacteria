@@ -7,7 +7,7 @@ from libc.math cimport sqrt, fmin, M_PI
 @cython.wraparound(False)
 @cython.boundscheck(False)
 def evolve(np.complex128_t [:, :] init, double a, double k, double u, double phi_s, double phi_t, double epsilon, double dt, int nitr, int batch_size, int size):
-	cdef double [:, :, :] phi_evol
+	cdef np.float64_t [:, :, :] phi_evol
 	cdef np.complex128_t [:, :] phi, phi_cube, phi_sq, dW
 	cdef np.complex128_t [:, :] phi_x, phi_x_cube, phi_x_sq, dW_x
 	cdef Py_ssize_t n, i, j, m
@@ -36,18 +36,20 @@ def evolve(np.complex128_t [:, :] init, double a, double k, double u, double phi
 	output_backward = pyfftw.empty_aligned((size, size), dtype='complex128')
 	fft_backward = pyfftw.FFTW(input_backward, output_backward,
 										direction='FFTW_BACKWARD', axes=(0, 1),
-										flags=['FFTW_MEASURE'])
-
+										flags=['FFTW_MEASURE', 'FFTW_DESTROY_INPUT'])
 
 	phi = init
 	phi_evol = np.empty((nitr, size, size), dtype=np.float64)
 	n = 0
-	for i in range(nitr):
-		# if i % batch_size == 0:
-		# 	phi_evol[n, :, ::1] = np.real(np.fft.ifft2(phi))
-		# 	n += 1
+	for i in xrange(nitr):
 		input_backward[:] = phi
 		phi_x = fft_backward()
+
+		if i % batch_size == 0:
+			for j in xrange(size):
+				for m in xrange(size):
+					phi_evol[n, j, m] = phi_x[j, m].real
+			n += 1
 
 		for j in xrange(size):
 			for m in xrange(size):
