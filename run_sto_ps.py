@@ -9,22 +9,24 @@ phi_t = -0.65
 phi_shift = 10
 u = 1e-5
 
-X = 128
+X = 256
 dx = 1
-T = 50
+T = 10
 dt = 5e-3
 n_batches = 100
 flat = False
 
 
-label = 'phi_t_{}_l=2'.format(phi_t)
+label = 'test_phi_t_{}'.format(phi_t)
 
 start_time = time.time()
 solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
-solver.initialise(X, dx, T, dt, n_batches, radius=18, skew=5, flat=flat)
+solver.initialise(X, dx, T, dt, n_batches, radius=18, skew=3, flat=flat)
 # solver.save_params(label)
 solver.print_params()
-solver.evolve(verbose=False)
+solver.evolve(verbose=True, cython=False)
 # solver.save_phi(label)
 end_time = time.time()
 print('The simulation took: {}'.format(end_time - start_time))
+
+# solver.make_movie(label)
