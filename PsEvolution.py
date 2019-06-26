@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation as am
 import time
 from scipy.integrate import ode
-from scipy.fftpack import fft2, ifft2, fftfreq
-import pyfftw
+from mkl_fft import fft2, ifft2
 from StoEvolutionPS import *
 
 
@@ -13,7 +12,6 @@ class PsEvolution(StoEvolutionPS):
 	def evolve(self, verbose=True):
 		self._make_k_grid()
 		self._make_filters()
-		self._set_up_fftw()
 		self.phi = np.zeros((self.n_batches, self.size, self.size))
 		phi = self.phi_initial
 
@@ -63,8 +61,7 @@ class PsEvolution(StoEvolutionPS):
 		return self._make_real(dphidt_complex)
 
 	def _random_init(self, initial_value):
-		self.input_forward[:] = np.random.normal(size=(self.size, self.size)).astype('complex128')
-		dW = self.fft_forward()
+		dW = fft2(np.random.normal(size=(self.size, self.size)).astype('complex128'))
 		noise = self.dt*dW
 		return self._make_real(noise)
 
