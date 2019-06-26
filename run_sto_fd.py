@@ -15,12 +15,12 @@ X = 200
 dx = 1
 dt = 1e-3
 n_batches = 100
-flat = True
+flat = False
 initial_value = phi_target
 
 def run(u):
     T = 5/(u*phi_shift)
-    label = 'u_{}_ep_{}'.format(u, epsilon)
+    label = 'u_{}_ep_{}_sin'.format(u, epsilon)
     start_time = time.time()
     solver = StoEvolution(epsilon, a, k, u, phi_target, phi_shift)
     solver.initialise(X, dx, T, dt, n_batches, initial_value=initial_value, flat=flat)
