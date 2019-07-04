@@ -2,10 +2,10 @@ import time
 import numpy as np
 from StoEvolutionPS import *
 
-old_label = 'phi_t_-0.65_u_5e-05_l=2_2'
-new_label= 'phi_t_-0.65_u_5e-05_l=2_3'
+old_label = 'phi_t_-0.6_u_3e-05_2'
+new_label= 'phi_t_-0.6_u_3e-05_3'
 
-T = 5e4
+T = 2e4
 
 start_time = time.time()
 solver = StoEvolutionPS()
