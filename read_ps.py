@@ -3,7 +3,7 @@ import numpy as np
 from PsEvolution import *
 
 for phi_t in [-0.65]:
-	label = 'phi_t_{}_l=2_2'.format(phi_t)
+	label = 'phi_t_{}_l=2'.format(phi_t)
 	solver = PsEvolution()
 	solver.load(label)
 	solver.print_params()

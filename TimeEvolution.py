@@ -244,21 +244,17 @@ class TimeEvolution:
 		plt.savefig('{}_final.pdf'.format(label))
 		plt.close()
 
-	def plot_steady_state(self, label, kink=0):
-		phi_liquid = 1
-		if kink > 0:
-			X = ((self.size-3) * self.dx)/(2 * kink)
-			phi_liquid = 2 * np.tanh(X/(np.sqrt(2 * self.k/ self.a))) + 2 * np.tanh(3 * X/(np.sqrt(2 * self.k/ self.a))) - 3
-		x = np.arange(0, (self.size)* self.dx, self.dx)[2:-2]
+	def plot_steady_state(self, label):
+		x = np.arange(0, (self.size)* self.dx, self.dx)
 
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')
-		plt.plot(x, self.phi[-2, 2:-2])
-		plt.plot((x[2], x[-3]), (phi_liquid, phi_liquid))
-		plt.plot((x[2], x[-3]), (-phi_liquid, - phi_liquid))
+		plt.plot(x, self.phi[-2])
+		plt.axhline(x=self.phi_target, color=k)
 		plt.xlabel(r'$x$')
 		plt.ylabel(r'$\phi$')
-		plt.title(r'steady state distribution')
+		plt.xlim([0, self.size*self.dx])
+		plt.ylim([-1, 1])
 		plt.savefig('{}_final.pdf'.format(label))
 		plt.close()
 
