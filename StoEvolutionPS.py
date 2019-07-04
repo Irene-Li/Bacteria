@@ -121,11 +121,15 @@ class StoEvolutionPS(StoEvolution):
 		phi += self.phi_target
 		return mkl_fft.fft2(phi)
 
-	def plot_slices(self, label):
-		phi = self.phi[-1]
-		for n in range(0, self.size, 20):
-			plt.plot(phi[n])
-		plt.show()
+	def plot_slice(self, label, n=-1):
+		phi = self.phi[n]
+		plt.rc('text', usetex=True)
+		plt.rc('font', family='serif')
+		plt.imshow(phi, vmin=-1, vmax=1, cmap='seismic')
+		plt.colorbar()
+		plt.tight_layout()
+		plt.savefig(label+"_snapshot_{}.pdf".format(n))
+		plt.close()
 
 
 	def make_movie(self, label, t_grid=1):

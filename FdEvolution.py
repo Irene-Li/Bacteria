@@ -8,8 +8,29 @@ from TimeEvolution import TimeEvolution
 
 class FdEvolution(TimeEvolution):
 
-	def evolve(self):
-		self._evolve_pbc()
+	def evolve(self, verbose=False):
+		self.phi  = np.zeros((self.n_batches, self.size))
+		self._make_laplacian_matrix()
+
+		small_batch = self.batch_size
+		while small_batch > 1000:
+			small_batch /= 10 # decrease the amount of time integration at each step
+
+		r = ode(self._fd_delta_phi).set_integrator('lsoda', atol=1e-10, nsteps=small_batch)
+		r.set_initial_value(self.phi_initial, 0)
+
+		n = 0
+		phi = self.phi_initial
+
+		for i in range(int((self.T/self.dt)/small_batch)):
+			if r.successful():
+				if i % int(self.batch_size/small_batch) == 0:
+					self.phi[n] = phi
+					if verbose:
+						print('iteration: {}	mean: {}'.format(n, np.mean(phi)))
+					n += 1
+				phi = r.integrate(r.t+self.dt*small_batch)
+
 
 	def rescale_to_standard(self):
 		time_ratio = self.a**2/self.k
@@ -63,29 +84,6 @@ class FdEvolution(TimeEvolution):
 		temp_diag = self.u * ( 2 * phi + self.phi_shift - self.phi_target)
 		jac -= sp.diags([temp_diag], [0], shape=(self.size, self.size))
 		return jac.todense()
-
-
-	def _evolve_pbc(self):
-		self.phi  = np.zeros((self.n_batches, self.size))
-		self._make_laplacian_matrix()
-
-		small_batch = self.batch_size
-		while small_batch > 1000:
-			small_batch /= 10 # decrease the amount of time integration at each step
-
-		r = ode(self._fd_delta_phi).set_integrator('lsoda', atol=1e-10, nsteps=small_batch)
-		r.set_initial_value(self.phi_initial, 0)
-
-		n = 0
-		phi = self.phi_initial
-
-		for i in range(int((self.T/self.dt)/small_batch)):
-			if r.successful():
-				if i % int(self.batch_size/small_batch) == 0:
-					self.phi[n] = phi
-					print('iteration: {}	mean: {}'.format(n * self.batch_size, np.mean(self.phi[n])))
-					n += 1
-				phi = r.integrate(r.t+self.dt*small_batch)
 
 	def _average_for_nbc(self, phi):
 		return super()._average(phi[:, 2:-2])
