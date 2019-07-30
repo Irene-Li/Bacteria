@@ -1,0 +1,54 @@
+import time
+import numpy as np
+from FdEvolution import *
+
+X = 400
+deltas = np.array([1e-1, 9e-2, 8e-2, 7e-2, 6e-2, 5e-2, 4e-2])
+amp = []
+n = []
+for delta in deltas:
+    label = 'X_{}_delta_{}_amp_eq'.format(X, delta)
+    solver = FdEvolution()
+    solver.load(label)
+    solver.rescale_to_standard()
+    # solver.plot_steady_state(label)
+    amp.append(np.max(solver.phi[-2]))
+    n.append(solver.count())
+
+alpha = solver.a
+k = solver.k
+X = solver.X
+# phi_shift = 100
+# u_tilde = alpha**2/(4*k*(1+deltas))
+# delta2 = alpha/np.sqrt(u_tilde*k)
+# delta3 = 1/phi_shift
+qc = np.sqrt(alpha/(2*k))
+# xi = (k/u_tilde)**(1/4)
+# lamd = qc*xi
+# g = 3*lamd**2*delta2 - 2*delta3**2/(9*lamd**4)
+x = np.log(deltas)
+y = np.log(amp)
+
+poly = np.poly1d(np.polyfit(np.log(deltas), np.log(amp), 1))
+
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif', size=15)
+plt.plot(x, y, 'x', label=r'simulations')
+plt.plot(x, poly(x), '--', label=r'best fit, gradient={:.3f}'.format(poly.c[0]))
+plt.ylabel(r'$\log(A)$')
+plt.xlabel(r'$\log(\Delta)$')
+plt.legend()
+plt.tight_layout()
+
+# plt.plot(np.log(deltas), np.log(n), 'o')
+plt.savefig('amp.pdf')
+plt.close()
+
+plt.plot(x, X/n, 'x', label=r'simulations')
+plt.axhline(y=2*np.pi/qc, color='k', label=r'$2\pi/q_\mathrm{c}$')
+plt.ylabel(r'Wavelength')
+plt.xlabel(r'$\log(\Delta)$')
+plt.legend()
+plt.tight_layout()
+plt.savefig('wavelength_ampeq.pdf')
+plt.close()
