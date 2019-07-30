@@ -95,7 +95,7 @@ class TimeEvolution:
 
 	def count(self):
 		phi_final = self.phi[-2]
-		bool_array = (phi_final>self.phi_target)
+		bool_array = (phi_final>self.phi_target).astype('int')
 		bool_array = np.abs(bool_array - np.roll(bool_array, -1))
 		return np.sum(bool_array)/2
 
@@ -250,11 +250,11 @@ class TimeEvolution:
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')
 		plt.plot(x, self.phi[-2])
-		plt.axhline(x=self.phi_target, color=k)
+		plt.axhline(y=self.phi_target, color='k')
 		plt.xlabel(r'$x$')
 		plt.ylabel(r'$\phi$')
 		plt.xlim([0, self.size*self.dx])
-		plt.ylim([-1, 1])
+		# plt.ylim([-1, 1])
 		plt.savefig('{}_final.pdf'.format(label))
 		plt.close()
 
