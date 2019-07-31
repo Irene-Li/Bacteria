@@ -35,4 +35,4 @@ cbar.ax.set_yticks([-1, 0, 1])
 cbar.ax.set_yticklabels([r'-$\phi_\mathrm{B}$', r'0', r'$\phi_\mathrm{B}$'])
 
 plt.savefig('droplet_splitting.pdf')
-plt.close() 
+plt.close()
