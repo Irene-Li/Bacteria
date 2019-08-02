@@ -125,7 +125,8 @@ class StoEvolutionPS(StoEvolution):
 		phi = self.phi[n]
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')
-		plt.imshow(phi, vmin=-1, vmax=1, cmap='seismic')
+		low, high = -1, 1
+		plt.imshow(phi, vmin=low, vmax=high, cmap='seismic')
 		plt.colorbar()
 		plt.tight_layout()
 		plt.savefig(label+"_snapshot_{}.pdf".format(n))
@@ -134,7 +135,7 @@ class StoEvolutionPS(StoEvolution):
 
 	def make_movie(self, label, t_grid=1):
 		fig = plt.figure()
-		low, high = -1.2, 1.2
+		low, high = -1, 1
 		ims = []
 		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True, cmap='seismic')
 		plt.colorbar(im)
@@ -181,36 +182,3 @@ class StoEvolutionPS(StoEvolution):
 		mywriter = am.FFMpegWriter()
 		ani.save(label+"_curve_movie.mp4", writer=mywriter)
 		plt.close()
-
-
-
-if __name__ == '__main__':
-
-	epsilon = 0.1
-	a = 0.2
-	k = 1
-	u = 1e-5
-	phi_t = 0
-	phi_shift = 10
-
-	X = 128
-	dx = 1
-	T = 100
-	dt = 5e-3
-	n_batches = 100
-	initial_value = 0
-	flat = False
-
-	for u in [5e-5]:
-		label = 'u_{}_test'.format(u)
-		initial_value = phi_t
-
-		start_time = time.time()
-		solver = StoEvolutionPS(epsilon, a, k, u, phi_t, phi_shift)
-		solver.initialise(X, dx, T, dt, n_batches, initial_value, flat=flat)
-		solver.save_params(label)
-		solver.print_params()
-		solver.evolve(verbose=False)
-		solver.save_phi(label)
-		end_time = time.time()
-		print('The simulation took: {}'.format(end_time - start_time))

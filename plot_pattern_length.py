@@ -2,12 +2,12 @@ import time
 import numpy as np
 from FdEvolution import *
 
-deltas = [100]
+deltas = [1000, 3000]
 Ls = [400]
 n = np.zeros((len(Ls), len(deltas)))
 for (i, d)in enumerate(deltas):
 	for (k, length) in enumerate(Ls):
-		label = 'X_{}_delta_{}_sin'.format(length, d)
+		label = 'X_{}_delta_{}_flat'.format(length, d)
 		print(label)
 		solver = FdEvolution()
 		solver.load(label)
