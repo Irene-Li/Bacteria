@@ -2,10 +2,10 @@ import numpy as np
 from StoEvolutionPS import *
 
 
-u = 3e-5
-for phi_t in [-0.7]:
+u = 5e-5
+for phi_t in [0.3]:
 # for u in [5e-5, 6e-5, 7e-5, 8e-5]:
-	label = 'phi_t_{}_u_{}'.format(phi_t, u)
+	label = 'phi_t_{}_u_{}_X=256_1'.format(phi_t, u)
 	solver = StoEvolutionPS()
 	solver.load(label)
 	solver.print_params()
