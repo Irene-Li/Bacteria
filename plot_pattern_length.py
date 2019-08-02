@@ -2,7 +2,7 @@ import time
 import numpy as np
 from FdEvolution import *
 
-deltas = [3000]
+deltas = [100]
 Ls = [400]
 n = np.zeros((len(Ls), len(deltas)))
 for (i, d)in enumerate(deltas):
@@ -13,12 +13,12 @@ for (i, d)in enumerate(deltas):
 		solver.load(label)
 		solver.rescale_to_standard()
 		# solver.plot_steady_state(label)
-		solver.plot_evolution(label, 100, 100)
+		solver.plot_evolution(label, 200, 200)
 		n[k, i] = solver.count()
 		print(n[k, i])
 
-for (k, length) in enumerate(Ls):
-	plt.plot(np.log(deltas), np.log(length/n[k]), 'x', label='X={}'.format(length))
-plt.legend()
-plt.savefig('pattern.pdf')
-plt.close()
+# for (k, length) in enumerate(Ls):
+# 	plt.plot(np.log(deltas), np.log(length/n[k]), 'x', label='X={}'.format(length))
+# plt.legend()
+# plt.savefig('pattern.pdf')
+# plt.close()

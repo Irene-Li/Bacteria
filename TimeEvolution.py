@@ -28,7 +28,7 @@ class TimeEvolution:
 		if flat:
 			self.phi_initial = self._random_init(initial_value)
 		else:
-			self.phi_initial = self._sin_surface(initial_value)
+			self.phi_initial = self._double_tanh(initial_value)
 
 	def _modify_params(self):
 		length_ratio = 1/self.dx
@@ -119,9 +119,9 @@ class TimeEvolution:
 		cbar = plt.colorbar()
 		cbar.set_ticks([-1, 0, 1])
 		cbar.set_ticklabels([r'-$\phi_\mathrm{B}$', r'0', r'$\phi_\mathrm{B}$'])
-		plt.xlabel(r'x')
+		plt.xlabel(r'$x$')
 		plt.xticks([])
-		plt.ylabel(r't')
+		plt.ylabel(r'$t$')
 		plt.yticks([])
 		plt.tight_layout()
 		plt.savefig('{}_evolution.pdf'.format(label))
@@ -266,7 +266,7 @@ class TimeEvolution:
 
 	def _sin_surface(self, phi_average):
 		x = np.arange(0, self.dx * (self.size), self.dx)
-		phi_initial = phi_average + 0.6*np.cos(2*np.pi*x/self.X)
+		phi_initial = phi_average - 0.6*np.cos(2*np.pi*x/self.X)
 		return self._enforce_bc(phi_initial)
 
 	def _make_shifted_interface(self, phi_average):
@@ -281,8 +281,6 @@ class TimeEvolution:
 		phi_initial = self._enforce_bc(phi_initial)
 		return phi_initial
 
-
-
 	def _slow_mfold(self, phi_average):
 		q_c = np.sqrt(self.a/(2 * self.k))
 		phi_b = 1
@@ -294,13 +292,15 @@ class TimeEvolution:
 		return self._enforce_bc(phi_initial)
 
 	def _double_tanh(self, phi_average):
+		print('plotting double tanh')
 		q_c = np.sqrt(self.a/(2 * self.k))
 
-		x_1 = (phi_average/4 + 0.3) * self.X
-		x_2 = (- phi_average/4 + 0.6) * self.X
+		x_1 = 0.25 * self.X
+		x_2 = 0.75 * self.X
 
 		x = np.arange(0, self.size * self.dx, self.dx)
-		phi_initial = 1 - np.tanh(q_c*(x - x_1))+ np.tanh(q_c*(x - x_2))
+		phi_initial = (1 - np.tanh(q_c*(x - x_1))+ np.tanh(q_c*(x - x_2))
+		 				- np.tanh(q_c*(x+x_1)) - np.tanh(q_c*(x-2*self.X+x_2)))
 		return self._enforce_bc(phi_initial)
 
 
