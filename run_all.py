@@ -18,7 +18,6 @@ phi_init = 0
 alpha_tilde = a*(1 - 3*phi_target**2)
 flat = False
 
-
 def run(delta):
 	u_tilde = alpha_tilde**2/(4*k*(1+delta))
 	u = u_tilde/(phi_target+phi_shift)
