@@ -5,10 +5,19 @@ from scipy.integrate import ode
 import scipy.sparse as sp
 import json
 from TimeEvolution import TimeEvolution
+from pseudospectral import delta_phi_ps_1d
 
-class FdEvolution(TimeEvolution):
 
-	def evolve(self, verbose=False):
+class DetEvolution1D(TimeEvolution):
+
+	def evolve(self, verbose=False, ps=True):
+		if ps:
+			self.evolve_ps(verbose)
+		else:
+			self.evolve_fd(verbose)
+
+
+	def evolve_fd(self, verbose=False):
 		self.phi  = np.zeros((self.n_batches, self.size))
 		self._make_laplacian_matrix()
 
@@ -31,6 +40,38 @@ class FdEvolution(TimeEvolution):
 					n += 1
 				phi = r.integrate(r.t+self.dt*small_batch)
 
+	def evolve_ps(self, verbose=True):
+		self.phi  = np.zeros((self.n_batches, self.size))
+		self.kmax_half = np.pi/2
+		self.kmax_two_thirds = np.pi*2/3
+		self.factor = np.pi*2/self.size
+
+		small_batch = self.batch_size
+		while small_batch > 1000:
+			small_batch /= 10 # decrease the amount of time integration at each step
+
+		r = ode(self._ps_delta_phi).set_integrator('lsoda', atol=1e-8, nsteps=small_batch)
+		r.set_initial_value(self.phi_initial, 0)
+
+		n = 0
+		phi = self.phi_initial
+
+		for i in range(int((self.T/self.dt)/small_batch)):
+			if r.successful():
+				if i % int(self.batch_size/small_batch) == 0:
+					self.phi[n] = phi
+					if verbose:
+						print('iteration: {}	mean: {}'.format(n, np.mean(phi)))
+					n += 1
+				phi = r.integrate(r.t+self.dt*small_batch)
+
+	def _ps_delta_phi(self, t, phi):
+		phi_complex = phi.astype('complex128')
+		delta_phi = delta_phi_ps_1d(phi_complex, self.a, self.k, self.u,
+									 self.phi_shift, self.phi_target,
+									 self.kmax_half, self.kmax_two_thirds,
+									 self.factor, self.size)
+		return np.real(delta_phi)
 
 	def rescale_to_standard(self):
 		time_ratio = self.a**2/self.k
@@ -61,16 +102,14 @@ class FdEvolution(TimeEvolution):
 
 		return phi
 
+
 	def _fd_delta_phi(self, t, phi):
 
 		mu = self.a * ( - phi + phi ** 3) - self.k * self._laplacian(phi)
 		lap_mu = self._laplacian(mu)
 		delta = lap_mu - self.u * (phi + self.phi_shift) * (phi - self.phi_target)
-
-		# enforce b.c.
-		delta = self._enforce_bc(delta)
-
 		return delta
+
 
 	def _make_laplacian_matrix(self):
 		diags = np.array([1, 1, -2, 1, 1])/self.dx**2

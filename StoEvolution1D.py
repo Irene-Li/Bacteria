@@ -3,13 +3,14 @@ from matplotlib import pyplot as plt
 from scipy.integrate import ode
 from scipy.fftpack import irfft, rfft, fft
 from TimeEvolution import TimeEvolution
-from FdEvolution import FdEvolution
+from DetEvolution1D import DetEvolution1D
 import json
 import scipy.sparse as sp
 import os
+from pseudospectral import evolve_sto_ps_1d
 
 
-class StoEvolution(FdEvolution):
+class StoEvolution1D(DetEvolution1D):
 
 	def __init__(self, epsilon=None, a=None, k=None, u=None, phi_target=None, phi_shift=None):
 		super().__init__(a, k, u, phi_target, phi_shift)
@@ -31,7 +32,7 @@ class StoEvolution(FdEvolution):
 		if flat:
 			self.phi_initial = self._flat_surface(initial_value)
 		else:
-			self.phi_initial = self._sin_surface(initial_value)
+			self.phi_initial = self._double_tanh(initial_value)
 
 	def save_params(self, label):
 		params = {
@@ -88,7 +89,21 @@ class StoEvolution(FdEvolution):
 		self.load_params(label)
 		self.load_phi(label)
 
-	def evolve(self, verbose=True):
+	def evolve(self, verbose=True, ps=True):
+		if ps:
+			self.evolve_ps()
+		else:
+			self.evolve_fd(verbose)
+
+	def evolve_ps(self):
+		phi = fft(self.phi_initial)
+		nitr = int(self.T/self.dt)
+		self.phi = evolve_sto_ps_1d(phi, self.a, self.k, self.u,
+									self.phi_shift, self.phi_target, self.epsilon,
+									self.dt, nitr, self.n_batches, self.X)
+
+
+	def evolve_fd(self, verbose):
 		self.phi = np.zeros((self.n_batches, self.size))
 		self._make_laplacian_matrix()
 		self._make_laplacian_fourier()
