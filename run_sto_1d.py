@@ -22,7 +22,7 @@ ps = True
 
 
 def run(u):
-    T = 0.5/u
+    T = 2/u
     label = 'X_{}_u_{}_tanh'.format(X, u)
     print(label)
     start_time = time.time()
