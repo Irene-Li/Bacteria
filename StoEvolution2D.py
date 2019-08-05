@@ -5,12 +5,12 @@ import time
 import scipy.sparse as sp
 from scipy.fftpack import fftfreq
 import json
-from StoEvolution import *
+from StoEvolution1D import *
 from pseudospectral import evolve_sto_ps
 import mkl_fft
 
 
-class StoEvolutionPS(StoEvolution):
+class StoEvolution2D(StoEvolution1D):
 
 	def evolve(self, verbose=True, cython=True):
 		if cython:

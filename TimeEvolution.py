@@ -292,7 +292,6 @@ class TimeEvolution:
 		return self._enforce_bc(phi_initial)
 
 	def _double_tanh(self, phi_average):
-		print('plotting double tanh')
 		q_c = np.sqrt(self.a/(2 * self.k))
 
 		x_1 = 0.25 * self.X
