@@ -15,7 +15,7 @@ X = 400
 dx = 1
 dt = 5e-3
 n_batches = 100
-flat = False
+flat = True
 initial_value = phi_target
 ps = True
 
@@ -23,7 +23,7 @@ ps = True
 
 def run(u):
     T = 2/u
-    label = 'X_{}_u_{}_tanh'.format(X, u)
+    label = 'X_{}_u_{}_flat'.format(X, u)
     print(label)
     start_time = time.time()
     solver = StoEvolution1D(epsilon, a, k, u, phi_target, phi_shift)
@@ -32,7 +32,10 @@ def run(u):
     solver.evolve(verbose=True, ps=ps)
     solver.save(label)
     end_time = time.time()
+    print('time: {}'.format(end_time - start_time))
 
-us = [5e-6]
-with Pool(len(us)) as p:
-        print(p.map(run, us))
+# us = [5e-6]
+# with Pool(len(us)) as p:
+#     print(p.map(run, us))
+
+run(5e-6)
