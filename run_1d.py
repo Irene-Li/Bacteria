@@ -9,18 +9,18 @@ phi_shift = 10
 phi_target = 0
 
 # simulation parameters
-X = 800
+X = 1000
 dx = 1
 dt = 1e-3
-n_batches = 100
+n_batches = 500
 flat = False
 initial_value = phi_target
 ps = True
 
 
 def run(u):
-	T = 10/u
-	label = 'u_{}_tanh'.format(u)
+	T = 1/u
+	label = 'u_{}_tanh_short'.format(u)
 	print(label)
 	start_time = time.time()
 	solver = DetEvolution1D(a, k, u, phi_target, phi_shift)
@@ -30,6 +30,6 @@ def run(u):
 	end_time = time.time()
 	print(end_time - start_time)
 
-us = [1e-6, 2e-6]
-with Pool(len(us)) as p:
+us = [5e-6, 2e-6]
+with Pool(2) as p:
     print(p.map(run, us))
