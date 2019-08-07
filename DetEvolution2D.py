@@ -4,16 +4,29 @@ from matplotlib import animation as am
 import time
 from scipy.integrate import ode
 from mkl_fft import fft2, ifft2
-from StoEvolutionPS import *
+from pseudospectral import evolve_det_ps
+from StoEvolution2D import *
 
 
-class PsEvolution(StoEvolutionPS):
+class DetEvolution2D(StoEvolution2D):
 
-	def evolve(self, verbose=True):
+	def evolve(self, verbose=True, fd=True):
+		if fd:
+			self.evolve_fd()
+		else:
+			self.evolve_vode(verbose)
+
+	def evolve_fd(self):
+		phi = fft2(self.phi_initial)
+		nitr = int(self.T/self.dt)
+		self.phi = evolve_det_ps(phi, self.a, self.k, self.u, self.phi_shift,
+						self.phi_target, self.dt, nitr,
+						self.n_batches, self.size)
+
+	def evolve_vode(self, verbose=True):
 		self._make_k_grid()
 		self._make_filters()
 		self.phi = np.zeros((self.n_batches, self.size, self.size))
-		phi = self.phi_initial
 
 		small_batch = self.batch_size
 		while small_batch > 10000:
@@ -23,7 +36,7 @@ class PsEvolution(StoEvolutionPS):
 		r.set_initial_value(self.phi_initial, 0)
 
 		n = 0
-		phi = self.phi_initial
+		phi = self._make_real(fft2(self.phi_initial))
 		for i in range(int((self.T/self.dt)/small_batch)):
 			if r.successful():
 				if i % int(self.batch_size/small_batch) == 0:
@@ -35,7 +48,7 @@ class PsEvolution(StoEvolutionPS):
 				phi = r.integrate(r.t+self.dt*small_batch)
 
 	def continue_evolution(self, T):
-		self.phi_initial = self._make_real(fft2(self.phi[-2]))
+		self.phi_initial = self.phi[-2]
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
@@ -61,13 +74,9 @@ class PsEvolution(StoEvolutionPS):
 		return self._make_real(dphidt_complex)
 
 	def _random_init(self, initial_value):
-		dW = fft2(np.random.normal(size=(self.size, self.size)).astype('complex128'))
+		dW = np.random.normal(size=(self.size, self.size))
 		noise = self.dt*dW
-		return self._make_real(noise)
-
-	def _droplet_init(self, radius, skew):
-		init = super()._droplet_init(radius, skew)
-		return self._make_real(init)
+		return noise
 
 
 if __name__ == '__main__':

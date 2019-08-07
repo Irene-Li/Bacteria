@@ -176,3 +176,64 @@ def evolve_sto_ps(np.complex128_t [:, :] init, double a, double k, double u, dou
 		phi[0,0] = u*phi_s*phi_t*(size*size)*dt + phi[0,0]
 
 	return phi_evol
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def evolve_det_ps(np.complex128_t [:, :] init, double a, double k, double u, double phi_s, double phi_t, double dt, int nitr, int n_batches, int size):
+	cdef np.float64_t [:, :, :] phi_evol
+	cdef np.complex128_t [:, :] phi, phi_cube, phi_sq
+	cdef np.complex128_t [:, :] phi_x, phi_x_cube, phi_x_sq
+	cdef Py_ssize_t n, i, j, m, batch_size
+	cdef double kmax_half, kmax_two_thirds, kx, ky, ksq, factor
+	cdef np.complex128_t temp
+	cdef np.complex128_t birth_death, mu
+
+	kmax_half = M_PI/2.0
+	kmax_two_thirds = M_PI*2.0/3.0
+	factor = M_PI*2.0/size
+
+	phi_x_sq = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	phi_x_cube = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+
+	phi = init
+	batch_size = int(nitr/n_batches)
+	phi_evol = np.empty((n_batches, size, size), dtype='float64')
+	n = 0
+	for i in xrange(nitr):
+		phi_x = mkl_fft.ifft2(phi)
+
+		if i % batch_size == 0:
+			for j in xrange(size):
+				for m in xrange(size):
+					phi_evol[n, j, m] = phi_x[j, m].real
+			print('iteration: {},  mean: {}'.format(n, phi[0,0].real/(size*size)))
+			n += 1
+
+		for j in xrange(size):
+			for m in xrange(size):
+				temp = phi_x[j,m]
+				phi_x_sq[j,m] = temp*temp
+				phi_x_cube[j,m] = temp*temp*temp
+
+		phi_cube = mkl_fft.fft2(phi_x_cube)
+		phi_sq = mkl_fft.fft2(phi_x_sq)
+
+		for j in xrange(size):
+			for m in xrange(size):
+				kx = fmin(j, size-j)*factor
+				ky = fmin(m, size-m)*factor
+				ksq = kx*kx + ky*ky
+				temp = phi[j,m]
+				if (kx>kmax_half) or (ky>kmax_half):
+					mu = (k*ksq-a)*temp
+				else:
+					mu = a*phi_cube[j,m] + (k*ksq-a)*temp
+				if (kx>kmax_two_thirds) or (ky>kmax_two_thirds):
+					birth_death = - u*(phi_s-phi_t)*temp
+				else:
+					birth_death = - u*(phi_s-phi_t)*temp - u*phi_sq[j,m]
+				phi[j,m] = dt*(-ksq*mu+birth_death) + temp
+
+		phi[0,0] = u*phi_s*phi_t*(size*size)*dt + phi[0,0]
+
+	return phi_evol
