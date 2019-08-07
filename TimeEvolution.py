@@ -99,6 +99,13 @@ class TimeEvolution:
 		bool_array = np.abs(bool_array - np.roll(bool_array, -1))
 		return np.sum(bool_array)/2
 
+	def plot_domain_length(self):
+		bool_array = (self.phi>self.phi_target).astype('int')
+		bool_array = np.abs(bool_array - np.roll(bool_array, -1))
+		plt.plot(np.sum(bool_array, axis=-1)/2)
+		plt.show()
+
+
 
 	def plot_evolution(self, label, t_size=100, x_size=100):
 		(t_size_old, x_size_old) = self.phi.shape

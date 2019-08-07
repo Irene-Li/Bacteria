@@ -17,10 +17,9 @@ flat = False
 initial_value = phi_target
 ps = True
 
-
 def run(u):
-	T = 1/u
-	label = 'u_{}_tanh_short'.format(u)
+	T = 5/u
+	label = 'u_{}_tanh'.format(u)
 	print(label)
 	start_time = time.time()
 	solver = DetEvolution1D(a, k, u, phi_target, phi_shift)
@@ -30,6 +29,6 @@ def run(u):
 	end_time = time.time()
 	print(end_time - start_time)
 
-us = [5e-6, 2e-6]
+us = [4e-6, 1e-6]
 with Pool(2) as p:
     print(p.map(run, us))

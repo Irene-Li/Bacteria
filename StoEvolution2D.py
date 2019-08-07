@@ -13,6 +13,7 @@ import mkl_fft
 class StoEvolution2D(StoEvolution1D):
 
 	def evolve(self, verbose=True, cython=True):
+		self.phi_initial = mkl_fft.fft2(self.phi_initial)
 		if cython:
 			nitr = int(self.T/self.dt)
 			self.phi = evolve_sto_ps(self.phi_initial, self.a, self.k, self.u,
@@ -43,7 +44,7 @@ class StoEvolution2D(StoEvolution1D):
 			self.phi_initial = self._droplet_init(radius, skew)
 
 	def continue_evolution(self, T):
-		self.phi_initial = mkl_fft.fft2(self.phi[-2])
+		self.phi_initial = self.phi[-2]
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
@@ -62,7 +63,7 @@ class StoEvolution2D(StoEvolution1D):
 		phi1 = - np.tanh((np.sqrt((x-midpoint1)**2+(y-midpoint1)**2)-size1)/l)+1
 		phi2 = - np.tanh((np.sqrt((x-midpoint2)**2+(y-midpoint2)**2)-size2)/l)+1
 		phi = phi1+phi2-1
-		self.phi_initial = mkl_fft.fft2(phi)
+		return phi
 
 	def _plot_state(self, phi, n):
 		plt.imshow(phi)
@@ -104,8 +105,7 @@ class StoEvolution2D(StoEvolution1D):
 		return noise
 
 	def _flat_surface(self, initial_value):
-		phi = np.zeros((self.size, self.size))+0j
-		phi[0, 0] += initial_value*(self.size)**2
+		phi = np.zeros((self.size, self.size))+initial_value
 		return phi
 
 	def _droplet_init(self, radius, skew):
@@ -119,14 +119,13 @@ class StoEvolution2D(StoEvolution1D):
 		phi = 0.7*(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
 		phi[midpoint, midpoint] = 0.7*2
 		phi += self.phi_target
-		return mkl_fft.fft2(phi)
+		return phi
 
 	def plot_slice(self, label, n=-1):
 		phi = self.phi[n]
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')
-		low, high = -1, 1
-		plt.imshow(phi, vmin=low, vmax=high, cmap='seismic')
+		plt.imshow(phi, cmap='seismic')
 		plt.colorbar()
 		plt.tight_layout()
 		plt.savefig(label+"_snapshot_{}.pdf".format(n))
