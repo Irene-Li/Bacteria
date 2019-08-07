@@ -71,6 +71,7 @@ def evolve_sto_ps_1d(np.complex128_t[:] init, double a, double k, double u, doub
 
 	phi = init
 	batch_size = int(nitr/n_batches)
+	nitr = batch_size * n_batches
 	phi_evol = np.empty((n_batches, size), dtype='float64')
 	n = 0
 	for i in xrange(nitr):
@@ -134,6 +135,7 @@ def evolve_sto_ps(np.complex128_t [:, :] init, double a, double k, double u, dou
 
 	phi = init
 	batch_size = int(nitr/n_batches)
+	nitr = batch_size * n_batches
 	phi_evol = np.empty((n_batches, size, size), dtype='float64')
 	n = 0
 	for i in xrange(nitr):
@@ -197,6 +199,7 @@ def evolve_det_ps(np.complex128_t [:, :] init, double a, double k, double u, dou
 
 	phi = init
 	batch_size = int(nitr/n_batches)
+	nitr = batch_size * n_batches
 	phi_evol = np.empty((n_batches, size, size), dtype='float64')
 	n = 0
 	for i in xrange(nitr):
