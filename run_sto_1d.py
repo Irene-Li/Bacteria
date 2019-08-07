@@ -6,7 +6,7 @@ from multiprocessing import Pool
 # parameters of the differential equation
 a = 0.1
 k = 1
-epsilon = 0.01
+epsilon = 0.02
 phi_shift = 10
 phi_target = 0
 
@@ -22,8 +22,8 @@ ps = True
 
 
 def run(u):
-    T = 2/u
-    label = 'X_{}_u_{}_flat'.format(X, u)
+    T = 5/u
+    label = 'u_{}_flat'.format(u)
     print(label)
     start_time = time.time()
     solver = StoEvolution1D(epsilon, a, k, u, phi_target, phi_shift)
@@ -31,6 +31,7 @@ def run(u):
     solver.print_params()
     solver.evolve(verbose=True, ps=ps)
     solver.save(label)
+    solver.plot_evolution(label, t_size=200, x_size=200)
     end_time = time.time()
     print('time: {}'.format(end_time - start_time))
 
@@ -38,4 +39,4 @@ def run(u):
 # with Pool(len(us)) as p:
 #     print(p.map(run, us))
 
-run(5e-6)
+run(2e-5)
