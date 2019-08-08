@@ -4,7 +4,7 @@ from DetEvolution2D import *
 from StoEvolution2D import *
 
 # Stochastic
-sto = True
+sto = False
 
 # Model parameters
 delta = 0.1
@@ -27,7 +27,7 @@ alpha_tilde = a*(1 - 3*phi_t**2)
 u_tilde = alpha_tilde**2/(4*k*(1+delta))
 u = u_tilde/(phi_t+phi_shift)
 
-label = 'sto_phi_t_{}_delta_{}'.format(phi_t, delta)
+label = 'det_phi_t_{}_delta_{}'.format(phi_t, delta)
 print(label, u)
 
 if sto:

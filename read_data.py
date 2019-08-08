@@ -7,7 +7,7 @@ twod = True
 
 phi_t = 0
 delta = 0.1
-label = 'det_phi_t_{}_delta_{}'.format(phi_t, delta)
+label = 'det_phi_t_{}_delta_{}_2'.format(phi_t, delta)
 
 if twod:
     solver = StoEvolution2D()
@@ -17,7 +17,7 @@ solver.load(label)
 solver.print_params()
 
 if twod:
-    # solver.make_move(label)
+    solver.make_movie(label)
     solver.plot_slice(label, -1)
 else:
     solver.plot_evolution(label, t_size=100, x_size=100)
