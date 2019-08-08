@@ -1,14 +1,29 @@
 import time
 import numpy as np
-from StoEvolutionPS import *
+from StoEvolution2D import *
+from DetEvolution2D import *
+from StoEvolution1D import *
+from DetEvolution1D import *
 
-old_label = 'phi_t_-0.6_u_3e-05_2'
-new_label= 'phi_t_-0.6_u_3e-05_3'
+sto = False
+twod = True
 
-T = 2e4
+old_label = 'det_phi_t_0_delta_0.1_2'
+new_label= 'det_phi_t_0_delta_0.1_3'
+
+T = 5e3
 
 start_time = time.time()
-solver = StoEvolutionPS()
+if twod:
+    if sto:
+        solver = StoEvolution2D()
+    else:
+        solver = DetEvolution2D()
+else:
+    if sto:
+        solver = StoEvolution1D()
+    else:
+        solver = DetEvolution1D()
 solver.load(old_label)
 solver.continue_evolution(T)
 solver.save(new_label)
