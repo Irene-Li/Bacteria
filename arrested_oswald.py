@@ -60,7 +60,7 @@ for u in [5e-3, 1e-3]:
 plt.ylim([-0.04, 0.04])
 plt.xlim([0, 22])
 plt.xlabel(r'$R$')
-plt.ylabel(r'$\partial_t R$')
+plt.ylabel(r'$\partial_tR$')
 plt.legend()
 plt.tight_layout()
 plt.savefig('arrested_ostwald.pdf')
