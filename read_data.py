@@ -3,21 +3,25 @@ import numpy as np
 from TimeEvolution import *
 from StoEvolution2D import *
 
-twod = True
+twod = False
 
-phi_t = 0
+phi_t = -0.25
 delta = 0.1
-label = 'det_phi_t_{}_delta_{}_2'.format(phi_t, delta)
+u = 2e-4
+label = 'u_{}_large'.format(u)
 
 if twod:
     solver = StoEvolution2D()
 else:
     solver = TimeEvolution()
 solver.load(label)
-solver.print_params()
+# solver.print_params()
 
 if twod:
-    solver.make_movie(label)
-    solver.plot_slice(label, -1)
+    # solver.make_movie(label)
+    # solver.plot_slice(label, -1)
+    plt.plot(solver.phi[-1, 10])
+    plt.show()
 else:
-    solver.plot_evolution(label, t_size=100, x_size=100)
+    solver.phi = solver.phi[250:]
+    solver.plot_evolution(label, t_size=250, x_size=300)
