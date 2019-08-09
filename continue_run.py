@@ -8,8 +8,8 @@ from DetEvolution1D import *
 sto = False
 twod = True
 
-old_label = 'det_phi_t_0_delta_0.1_2'
-new_label= 'det_phi_t_0_delta_0.1_3'
+old_label = 'det_phi_t_0_delta_0.1_3'
+new_label= 'det_phi_t_0_delta_0.1_4'
 
 T = 5e3
 
