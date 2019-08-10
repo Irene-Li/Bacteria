@@ -3,12 +3,12 @@ import numpy as np
 from TimeEvolution import *
 from StoEvolution2D import *
 
-twod = False
+twod = True
 
-phi_t = -0.25
+phi_t = -0.5
 delta = 0.1
-u = 2e-4
-label = 'u_{}_large'.format(u)
+u = 1e-4
+label = 'phi_t_{}_u_{}_2'.format(phi_t, u)
 
 if twod:
     solver = StoEvolution2D()
@@ -18,10 +18,9 @@ solver.load(label)
 # solver.print_params()
 
 if twod:
-    # solver.make_movie(label)
+    solver.make_movie(label)
     # solver.plot_slice(label, -1)
-    plt.plot(solver.phi[-1, 10])
-    plt.show()
+
 else:
     solver.phi = solver.phi[250:]
     solver.plot_evolution(label, t_size=250, x_size=300)

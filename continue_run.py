@@ -5,11 +5,11 @@ from DetEvolution2D import *
 from StoEvolution1D import *
 from DetEvolution1D import *
 
-sto = False
+sto = True
 twod = True
 
-old_label = 'det_phi_t_0_delta_0.1_3'
-new_label= 'det_phi_t_0_delta_0.1_4'
+old_label = 'phi_t_-0.5_u_0.0001_3'
+new_label= 'phi_t_-0.5_u_0.0001_4'
 
 T = 5e3
 
@@ -27,6 +27,7 @@ else:
 solver.load(old_label)
 solver.continue_evolution(T)
 solver.save(new_label)
+solver.make_movie(new_label)
 end_time = time.time()
 print('The simulation took: ')
 print(end_time - start_time)
