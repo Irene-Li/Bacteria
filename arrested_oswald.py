@@ -18,8 +18,8 @@ plt.rc('font', family='serif', size=15)
 
 plt.axhline(y=0, color='k')
 
-for u in [5e-3, 1e-3]:
-    for phi_target in [-0.8, -0.7]:
+for u in [1e-3]:
+    for phi_target in [-0.7]:
         gradient_dense = - u*(2 + phi_shift - phi_target)
         gradient_dilute = - u*(-2+phi_shift - phi_target)
         f_dense = - u*(1+phi_shift)*(1-phi_target)
@@ -53,15 +53,13 @@ for u in [5e-3, 1e-3]:
         R = np.arange(0.5, 2/l, 0.1)
         x = u*phi_shift
         y = phi_target
-        plt.plot(R, growth_rate(R), label=r'$-u \phi_\mathrm{{a}}={}, \phi_\mathrm{{t}}={}$'.format(x, y))
-        # plt.plot(R, g_v(2, R), label=r'$g_2(R)$'')
+        plt.plot(R, growth_rate(R), label=r'$\partial_t R$')
+        plt.plot(R, g_v(2, R), label=r'$g_2(R)$')
 
-# plt.plot(R, growth_rate(2, R), label=r'$l=2$ mode')
-plt.ylim([-0.04, 0.04])
-plt.xlim([0, 22])
+plt.ylim([-0.015, 0.04])
+plt.xlim([0, 12])
 plt.xlabel(r'$R$')
-plt.ylabel(r'$\partial_tR$')
 plt.legend()
 plt.tight_layout()
-plt.savefig('arrested_ostwald.pdf')
+plt.savefig('g2.pdf')
 plt.close()
