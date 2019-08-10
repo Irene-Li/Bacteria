@@ -11,10 +11,10 @@ phi_shift = 10
 phi_target = 0
 
 # simulation parameters
-X = 400
+X = 800
 dx = 1
 dt = 5e-3
-n_batches = 100
+n_batches = 200
 flat = True
 initial_value = phi_target
 ps = True
@@ -31,12 +31,10 @@ def run(u):
     solver.print_params()
     solver.evolve(verbose=True, ps=ps)
     solver.save(label)
-    solver.plot_evolution(label, t_size=200, x_size=200)
+    # solver.plot_evolution(label, t_size=200, x_size=200)
     end_time = time.time()
     print('time: {}'.format(end_time - start_time))
 
-# us = [5e-6]
-# with Pool(len(us)) as p:
-#     print(p.map(run, us))
-
-run(2e-5)
+us = [4e-5, 2e-5, 1e-5, 8e-6, 6e-6, 5e-6]
+with Pool(len(us)) as p:
+    print(p.map(run, us))
