@@ -116,8 +116,8 @@ class StoEvolution2D(StoEvolution1D):
 		l = np.sqrt(self.k/self.a)
 		theta = np.arctan((y-midpoint)/(x-midpoint))
 		radius = radius + skew*np.cos(theta*2)
-		phi = 0.7*(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
-		phi[midpoint, midpoint] = 0.7*2
+		phi = 0.6*(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
+		phi[midpoint, midpoint] = 0.6*2
 		phi += self.phi_target
 		return phi
 
