@@ -116,9 +116,9 @@ class StoEvolution2D(StoEvolution1D):
 		l = np.sqrt(self.k/self.a)
 		theta = np.arctan((y-midpoint)/(x-midpoint))
 		radius = radius + skew*np.cos(theta*2)
-		phi = 0.6*(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
-		phi[midpoint, midpoint] = 0.6*2
-		phi += self.phi_target
+		phi = 1 *(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
+		phi[midpoint, midpoint] = 2
+		phi += - 1
 		return phi
 
 	def plot_slice(self, label, n=-1):
@@ -131,6 +131,8 @@ class StoEvolution2D(StoEvolution1D):
 		plt.savefig(label+"_snapshot_{}.pdf".format(n))
 		plt.close()
 
+	def _average(self, phi):
+		return np.mean(phi, axis=(1, 2))
 
 	def make_movie(self, label, t_grid=1):
 		fig = plt.figure()

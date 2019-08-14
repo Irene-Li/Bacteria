@@ -7,8 +7,8 @@ twod = True
 
 phi_t = -0.5
 delta = 0.1
-u = 1e-4
-label = 'phi_t_{}_u_{}_2'.format(phi_t, u)
+u = 5e-5
+label = 'phi_t_{}_u_{}_5'.format(phi_t, u)
 
 if twod:
     solver = StoEvolution2D()
@@ -18,8 +18,9 @@ solver.load(label)
 # solver.print_params()
 
 if twod:
-    solver.make_movie(label)
-    # solver.plot_slice(label, -1)
+    # solver.make_movie(label)
+    solver.plot_phase_space(label)
+    solver.plot_average(label)
 
 else:
     solver.phi = solver.phi[250:]
