@@ -5,11 +5,11 @@ from DetEvolution2D import *
 from StoEvolution1D import *
 from DetEvolution1D import *
 
-sto = True
+sto = False
 twod = True
 
-old_label = 'phi_t_-0.5_u_0.0001_3'
-new_label= 'phi_t_-0.5_u_0.0001_4'
+old_label = 'phi_t_-0.5_u_0.0002_4'
+new_label= 'phi_t_-0.5_u_0.0002_5'
 
 T = 5e3
 
