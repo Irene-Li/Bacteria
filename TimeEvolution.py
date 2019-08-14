@@ -311,16 +311,11 @@ class TimeEvolution:
 
 
 	def _average(self, phi):
-		l = phi.shape[-1]
-		s = np.sum(phi[:, 1:-1], axis = -1)
-		s += 0.5 * (phi[:, 0] + phi[:, -1])
-		return s/(l-1)
+		return np.mean(phi, axis=-1)
+
 
 	def _average_vector(self, phi):
-		l = phi.size
-		s = np.sum(phi[1:-1])
-		s += 0.5 * (phi[0] + phi[-1])
-		return s/(l-1)
+		return np.mean(phi)
 
 	def _mean_bd(self, phi):
 		bd = - (phi + self.phi_shift)*(phi - self.phi_target)
