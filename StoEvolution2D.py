@@ -43,8 +43,10 @@ class StoEvolution2D(StoEvolution1D):
 		if not flat:
 			self.phi_initial = self._droplet_init(radius, skew)
 
-	def continue_evolution(self, T):
+	def continue_evolution(self, T, pert=False):
 		self.phi_initial = self.phi[-2]
+		if pert:
+			self._add_perturbation()
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
@@ -108,7 +110,7 @@ class StoEvolution2D(StoEvolution1D):
 		phi = np.zeros((self.size, self.size))+initial_value
 		return phi
 
-	def _droplet_init(self, radius, skew):
+	def _droplet_init(self, radius, skew, gas_density=-0.8):
 		x = np.arange(self.size)
 		y = np.arange(self.size)
 		x, y = np.meshgrid(x, y)
@@ -116,10 +118,17 @@ class StoEvolution2D(StoEvolution1D):
 		l = np.sqrt(self.k/self.a)
 		theta = np.arctan((y-midpoint)/(x-midpoint))
 		radius = radius + skew*np.cos(theta*2)
-		phi = 1 *(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
-		phi[midpoint, midpoint] = 2
-		phi += - 1
+		phi = -gas_density *(- np.tanh((np.sqrt((x-midpoint)**2+(y-midpoint)**2)-radius)/l)+1)
+		phi[midpoint, midpoint] = - 2*gas_density
+		phi += gas_density
 		return phi
+
+	def _add_perturbation(self, skew=5):
+		droplet_size = np.sum(self.phi_initial[self.phi_initial>0])
+		droplet_density = np.mean(self.phi_initial[self.phi_initial>0])
+		gas_density = np.mean(self.phi_initial[self.phi_initial<0])
+		radius = np.sqrt(droplet_size/np.pi)
+		self.phi_initial = self._droplet_init(radius, skew, gas_density)
 
 	def plot_slice(self, label, n=-1):
 		phi = self.phi[n]

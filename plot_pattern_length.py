@@ -3,7 +3,7 @@ import numpy as np
 from DetEvolution1D import *
 from mkl_fft import fft
 
-us = [1e-5, 2e-5, 3e-5, 4e-5, 5e-5, 6e-5, 7e-5, 8e-5, 9e-5, 1e-4]
+us = [9.5e-6, 1e-5, 1.5e-5, 2e-5, 2.5e-5, 3e-5, 3.5e-5, 4e-5, 5e-5, 6e-5, 7e-5, 8e-5, 9e-5, 1e-4]
 Ls = [800]
 us = np.sort(us)
 inits = ['flat']
