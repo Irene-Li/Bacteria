@@ -210,18 +210,23 @@ class TimeEvolution:
 
 
 	def plot_average(self, label):
-		self.phi_average = self._average(self.phi)
+		phi_average = self._average(self.phi)
+		phi_dot = -(self.phi- self.phi_target) * (self.phi + self.phi_shift)
+		phi_bar_dot = self._average(phi_dot)
 		t = np.linspace(0, self.T, self.n_batches)
 		phi_b = 1
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')
 
-		plt.plot(t, self.phi_average, 'b-')
-		# plt.plot((0, self.T), (-self.phi_target, self.phi_target), 'k--')
-		# plt.plot((0, self.T), (-phi_b, -phi_b), 'g--')
-		plt.title(r'Evolution of $\bar{\phi}$ over time')
-		plt.xlabel(r't')
-		plt.ylabel(r'$\bar{\phi}$')
+		f, (ax1, ax2) = plt.subplots(2, sharex=True)
+		ax1.plot(t, phi_average, 'b-')
+		ax2.plot(t, phi_bar_dot, 'k-')
+		f.subplots_adjust(hspace=0)
+		plt.setp([a.get_xticklabels() for a in f.axes[:-1]], visible=False)
+
+		ax2.set_xlabel(r't')
+		ax1.set_ylabel(r'$\phi$')
+		ax2.set_ylabel(r'$\partial_t\phi$')
 		plt.savefig('{}_average.pdf'.format(label))
 		plt.close()
 

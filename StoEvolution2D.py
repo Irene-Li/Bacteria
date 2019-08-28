@@ -148,10 +148,14 @@ class StoEvolution2D(StoEvolution1D):
 		low, high = -1, 1
 		ims = []
 		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True, cmap='seismic')
-		plt.colorbar(im)
+		plt.axis('off')
+		cbar = plt.colorbar(im)
+		cbar.set_ticks([-1, 0, 1])
+		cbar.set_ticklabels([r'-$\phi_\mathrm{B}$', r'0', r'$\phi_\mathrm{B}$'])
 		for i in range(self.n_batches):
 			xy = self.phi[i]
 			im = plt.imshow(xy, vmin=low, vmax=high, animated=True, cmap='seismic')
+			plt.axis('off')
 			ims.append([im])
 		ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
 										repeat_delay=1000)
