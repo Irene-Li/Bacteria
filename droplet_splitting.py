@@ -1,13 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import AxesGrid
-from StoEvolutionPS import *
+from StoEvolution2D import *
 
 u = 4e-5
 phi_t = -0.6
 
 slices = [50, 50, 25, 0]
 names = ['', '_2', '_3', '_4']
+phi_collect = []
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif', size=15)
@@ -23,11 +24,17 @@ for i in range(4):
     n = names[i]
     ax = grid[i]
     label = 'phi_t_{}_u_{}'.format(phi_t, u) + n
-    solver = StoEvolutionPS()
+    solver = StoEvolution2D()
     solver.load(label)
     phi = solver.phi[s]
+    phi_collect.append(solver.phi)
     ax.set_axis_off()
     im = ax.imshow(phi, vmin=-1, vmax=1, cmap='seismic')
+
+solver.phi = np.concatenate(phi_collect, axis=0)
+solver.phi = solver.phi[::4]
+print(solver.phi.shape)
+solver.make_movie('phi_t_{}_u_{}_all'.format(phi_t, u))
 
 cbar = grid.cbar_axes[0].colorbar(im)
 
