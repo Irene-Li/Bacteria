@@ -10,7 +10,7 @@ ncols = len(slices)
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif', size=15)
-fig = plt.figure(figsize=(ncols*5+3, 5))
+fig = plt.figure(figsize=(ncols*5-1, 5))
 grid = AxesGrid(fig, 111, nrows_ncols=(1, ncols),
                 axes_pad=0.5,
                 cbar_mode='single',
