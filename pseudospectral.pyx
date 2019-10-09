@@ -107,6 +107,12 @@ def evolve_sto_ps_1d(np.complex128_t[:] init, double a, double k, double u, doub
 			noise = sqrt(2*(M2+M1*ksq)*epsilon*dt)*dW[j]
 			phi[j] = dt*(-M1*ksq*mu+birth_death) +noise + temp
 
+		if i % batch_size == 0:
+			for j in xrange(size):
+				phi_evol[n, j] = phi_x[j].real
+			print('iteration: {},  mean: {}'.format(n, phi[0].real/size))
+			n += 1
+
 		phi[0] = u*phi_s*phi_t*(size*size)*dt + phi[0]
 
 	return phi_evol
