@@ -8,11 +8,11 @@ from DetEvolution1D import *
 sto = True
 twod = True
 
-phi_t = -0.5
-phi_s = 2
-u = 5e-5
-old_label = 'phi_t_{}_phi_s_{}_u_{}_5'.format(phi_t, phi_s, u)
-new_label= 'phi_t_{}_phi_s_{}_u_{}_6'.format(phi_t, phi_s, u)
+phi_t = -0.4
+phi_s = 1.4
+u = 1e-5
+old_label = 'phi_t_{}_phi_s_{}_u_{}'.format(phi_t, phi_s, u)
+new_label= 'phi_t_{}_phi_s_{}_u_{}_2'.format(phi_t, phi_s, u)
 
 T = 5e3
 

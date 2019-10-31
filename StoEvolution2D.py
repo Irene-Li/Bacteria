@@ -163,36 +163,20 @@ class StoEvolution2D(StoEvolution1D):
 		ani.save(label+"_movie.mp4", writer=mywriter)
 		plt.close()
 
-	def make_bd_movie(self, label):
-		fig = plt.figure()
-		bd = - (self.phi+self.phi_shift)*(self.phi-self.phi_target)
-		high = max(-np.min(bd), np.max(bd))
-		low = -high
-		ims = []
-		im = plt.imshow(bd[0], vmin=low, vmax=high, animated=True, cmap='seismic')
-		plt.colorbar(im)
-		for i in range(self.n_batches):
-			xy = bd[i]
-			im = plt.imshow(xy, vmin=low, vmax=high, animated=True, cmap='seismic')
-			ims.append([im])
-		ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
-										repeat_delay=1000)
-		mywriter = am.FFMpegWriter()
-		ani.save(label+"_bd_movie.mp4", writer=mywriter)
-		plt.close()
-
-
-	def make_curve_movie(self, label):
-		fig = plt.figure()
-		phi = (self.phi > 0.5).astype('float64')
-		ims = []
-		for i in range(self.n_batches):
-			xy = phi[i]
-			im = plt.imshow(xy, animated=True)
-			ims.append([im])
-		plt.colorbar(im)
-		ani = am.ArtistAnimation(fig, ims, interval=100, blit=True,
-										repeat_delay=1000)
-		mywriter = am.FFMpegWriter()
-		ani.save(label+"_curve_movie.mp4", writer=mywriter)
-		plt.close()
+	def measure_domain(self, label):
+		from skimage.measure import find_contours
+		from skimage.filters import gaussian
+		contours = find_contours(gaussian(self.phi[-1],4), 0)
+		plt.imshow(self.phi[-1], cmap='seismic', alpha=0.5)
+		for contour in contours:
+			plt.plot(contour[:, 1], contour[:, 0], linewidth=2)
+		plt.show()
+		# compute contour
+		length = 0
+		for contour in contours:
+			norms = np.linalg.norm(contour[:-1]-contour[1:], axis=-1)
+			length += np.sum(norms)
+		print(length)
+		area = self.X*self.X/2
+		width = area/length/2
+		print(width)

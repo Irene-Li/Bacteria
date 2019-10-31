@@ -36,8 +36,34 @@ class Droplet():
             self._droplet_frac = self._droplet_frac_finite
         else:
             print("must have either pbc or finite as boundary condition")
+    def plot_r_dot_single(self, us, phi_ts):
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif', size=16)
+        for u in us:
+            for phi_t in phi_ts:
+                self.u = u
+                self.phi_target = phi_t
+                self.calculate_params()
+                Rmin = self.gamma/self.c_dilute*0.1
+                Rmax = 10/self.k_dilute
+                R = np.arange(Rmin, Rmax, 0.01)
+                r_dot = self.R_dot_single_droplet(R)
+                plt.plot(R, r_dot, label=r"$-uM_\mathrm{{A}}\phi_\mathrm{{a}}={},\phi_\mathrm{{t}}={}$".format(u*self.phi_shift, phi_t))
+        plt.axhline(y=0, c='k')
+        plt.ylim([-0.003, 0.004])
+        plt.yticks([0], [r'$0$'])
+        Rmax = 1.2/self.k_dilute
+        plt.xlim([0, Rmax])
+        plt.xticks(np.arange(0, Rmax, 10))
+        plt.xlabel(r'$R$')
+        plt.ylabel(r'$\partial_t R$')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('r_dot_single_droplet.pdf')
+        plt.close()
 
-    def plot_r_dot(self, n_list):
+
+    def plot_r_dot_mult(self, n_list):
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif', size=15)
         plt.axhline(y=0, c='k')
@@ -206,11 +232,6 @@ class Droplet():
         term4 = (self.k_dilute*kn(v-1,z_dilute)/kn(v,z_dilute)-v/R)*(extra_term + b0_dilute*l*kn(1, z_dilute))
 
         return -term1+term2-term3+term4
-
-
-
-
-
 
     def _find_root_of_omega_minus(self, N):
         omega_minus = lambda r: self.omega_minus(r, N)
@@ -389,18 +410,18 @@ class Droplet():
 
 
 if __name__ == '__main__':
-    phi_target = -0.6
-    u = 5e-5
+    phi_targets = [-0.7, -0.8]
+    us = [1e-4, 5e-5]
     A = 256**2
-    solver = Droplet(A, phi_target=phi_target, u=u)
-    solver.calculate_params()
+    solver = Droplet(A)
     solver.set_boundary_conditions('pbc')
-    # solver.plot_r_dot([10, 50])
+    solver.plot_r_dot_single(us, phi_targets)
+    # solver.calculate_params()
 
 
-    epsilons = [0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.1, 0.12]
-    orders = ['_3', '_4', '_2', '_2', '', '', '', '']
-    labels = ['phi_t_{}_u_{}_epsilon_{}{}'.format(phi_target, u, epsilon, order)
-                for (epsilon, order) in zip(epsilons, orders)]
-    solver.plot_n_against_r(labels)
+    # epsilons = [0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.1, 0.12]
+    # orders = ['_3', '_4', '_2', '_2', '', '', '', '']
+    # labels = ['phi_t_{}_u_{}_epsilon_{}{}'.format(phi_target, u, epsilon, order)
+    #             for (epsilon, order) in zip(epsilons, orders)]
+    # solver.plot_n_against_r(labels)
     # solver.plot_epsilon_against_n(epsilons, labels)
