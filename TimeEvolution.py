@@ -87,12 +87,13 @@ class TimeEvolution:
 		pass
 
 
-	def continue_evolution(self, n_steps):
+	def continue_evolution(self, T):
 		self.phi_initial = self.phi[-2]
-		self.T = self.dt * n_steps
+		self.T = T
+		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
-		self.n_batches = int(n_steps/self.batch_size)
 		self.evolve()
+
 
 	def count(self):
 		phi_final = self.phi[-2]
