@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from FdEvolution import *
+from DetEvolution1D import *
 
 X = 400
 deltas = np.array([1e-1, 9e-2, 8e-2, 7e-2, 6e-2, 5e-2, 4e-2])
@@ -8,7 +8,7 @@ amp = []
 n = []
 for delta in deltas:
     label = 'X_{}_delta_{}_amp_eq'.format(X, delta)
-    solver = FdEvolution()
+    solver = DetEvolution1D()
     solver.load(label)
     solver.rescale_to_standard()
     # solver.plot_steady_state(label)
@@ -58,10 +58,10 @@ deltas = [0.04, 0.1]
 
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=15)
+plt.rc('font', family='serif', size=20)
 for delta in deltas:
     label = 'X_{}_delta_{}_amp_eq'.format(X, delta)
-    solver = FdEvolution()
+    solver = DetEvolution1D()
     solver.load(label)
     # solver.rescale_to_standard()
     phi = solver.phi[-2]
@@ -74,5 +74,6 @@ plt.yticks([-1, 0, 1],
 plt.ylim([-1.1, 1.1])
 plt.xlabel(r'$x$')
 plt.legend()
+plt.tight_layout()
 plt.savefig('amp_eq.pdf')
 plt.close()

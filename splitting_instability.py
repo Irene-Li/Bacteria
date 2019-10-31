@@ -65,15 +65,17 @@ for (i, phi_target) in enumerate(phi_ts):
             term3 = (k*iv(v-1,k*R)/iv(v,k*R)-v/R)*(extra_term - b0_dense*k*iv(1, k*R))
             term4 = (l*kn(v-1,l*R)/kn(v,l*R)-v/R)*(extra_term + b0_dilute*l*kn(1, l*R))
             g_v[i,j] = -term1+term2-term3+term4
-            # radii[i, j] = 1
+            radii[i, j] = 1
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif', size=15)
 max = np.max(np.abs(g_v))
 min = - max
 x, y = np.meshgrid(np.log10(us*phi_shift), phi_ts)
+
 plt.pcolor(x, y, g_v, vmin=min, vmax=max, edgecolors='face', cmap='seismic', alpha=1)
-plt.colorbar()
-plt.xlabel(r'$\log(-u \phi_\mathrm{a})$')
+plt.colorbar(ticks=[-0.01, 0, 0.01])
+plt.yticks(np.arange(-0.99, -0.6, 0.1))
+plt.xlabel(r'$\log(-u M_\mathrm{A} \phi_\mathrm{a})$')
 plt.ylabel(r'$\phi_\mathrm{t}$')
 plt.title(r'$g_2(R_\mathrm{c})$')
 plt.text(-2, -0.93, r'No stable radius',  {'color': 'k', 'fontsize': 18, 'ha': 'center', 'va': 'center',
@@ -81,8 +83,9 @@ plt.text(-2, -0.93, r'No stable radius',  {'color': 'k', 'fontsize': 18, 'ha': '
 plt.tight_layout()
 plt.savefig('stability.pdf')
 plt.close()
+
 # plt.contourf(x, y, radii, levels=[-0.5, 0.5, 1.5, 2.5], cmap=plt.cm.Blues)
-# plt.xlabel(r'$\log(- u \phi_\mathrm{a})$')
+# plt.xlabel(r'$\log(- u M_\mathrm{A} \phi_\mathrm{a})$')
 # plt.ylabel(r'$\phi_\mathrm{t}$')
 # plt.text(-1.9, -0.9, r'uniform',  {'color': 'k', 'fontsize': 15, 'ha': 'center', 'va': 'center',
 #           'bbox': dict(boxstyle="round", fc="w", ec="k", pad=0.2)})

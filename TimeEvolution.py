@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from mkl_fft import fft
 from scipy.integrate import ode, cumtrapz
 import json
 
@@ -98,6 +99,7 @@ class TimeEvolution:
 		bool_array = (phi_final>self.phi_target).astype('int')
 		bool_array = np.abs(bool_array - np.roll(bool_array, -1))
 		return np.sum(bool_array)/2
+
 
 	def plot_domain_length(self):
 		bool_array = (self.phi>self.phi_target).astype('int')
@@ -208,6 +210,16 @@ class TimeEvolution:
 		plt.savefig('{}_phase_space.pdf'.format(label))
 		plt.close()
 
+	def plot_wavenum_evol(self, label):
+		from skimage.feature import canny
+		edges = canny(self.phi, sigma=10)
+		wavenums = np.sum(edges, axis=-1)[1:-1]
+		plt.plot(wavenums)
+		plt.xlabel(r'$t$')
+		plt.ylabel(r'$n$')
+		plt.tight_layout()
+		plt.savefig('{}_wavenum.pdf'.format(label))
+		plt.close()
 
 	def plot_average(self, label):
 		phi_average = self._average(self.phi)
@@ -272,6 +284,11 @@ class TimeEvolution:
 		# plt.ylim([-1, 1])
 		plt.savefig('{}_final.pdf'.format(label))
 		plt.close()
+
+	def calculate_u(self, delta):
+		alpha_tilde = self.a*(1-3*self.phi_target**2)
+		u_tilde = alpha_tilde**2/(4*self.k*(1+delta))
+		self.u = u_tilde/(self.phi_shift+self.phi_target)
 
 	def rescale_to_standard(self):
 		pass
