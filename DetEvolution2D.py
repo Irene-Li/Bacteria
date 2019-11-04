@@ -73,11 +73,6 @@ class DetEvolution2D(StoEvolution2D):
 		dphidt_complex = super()._delta(phi_complex)
 		return self._make_real(dphidt_complex)
 
-	def _random_init(self, initial_value):
-		dW = np.random.normal(size=(self.size, self.size))
-		noise = self.dt*dW
-		return noise
-
 
 if __name__ == '__main__':
 
