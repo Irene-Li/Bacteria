@@ -107,7 +107,9 @@ class StoEvolution2D(StoEvolution1D):
 		return noise
 
 	def _flat_surface(self, initial_value):
-		phi = np.zeros((self.size, self.size))+initial_value
+		dW = np.random.normal(size=(self.size, self.size))
+		noise = self.dt*dW
+		phi = noise+initial_value
 		return phi
 
 	def _droplet_init(self, radius, skew, gas_density=-0.8):
