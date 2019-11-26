@@ -32,9 +32,9 @@ y = np.log(amp)
 poly = np.poly1d(np.polyfit(np.log(deltas), np.log(amp), 1))
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=15)
+plt.rc('font', family='serif', size=17)
 plt.plot(x, y, 'x', label=r'simulations')
-plt.plot(x, poly(x), '--', label=r'best fit, gradient={:.3f}'.format(poly.c[0]))
+plt.plot(x, poly(x), '--', label=r'best fit, gradient={:.2f}'.format(poly.c[0]))
 plt.ylabel(r'$\log(A)$')
 plt.xlabel(r'$\log(\Delta)$')
 plt.legend()
@@ -44,36 +44,36 @@ plt.tight_layout()
 plt.savefig('amp.pdf')
 plt.close()
 
-plt.plot(x, X/n, 'x', label=r'simulations')
-plt.axhline(y=2*np.pi/qc, color='k', label=r'$2\pi/q_\mathrm{c}$')
-plt.ylabel(r'Wavelength')
-plt.xlabel(r'$\log(\Delta)$')
-plt.legend()
-plt.tight_layout()
-plt.savefig('wavelength_ampeq.pdf')
-plt.close()
-
-X = 300
-deltas = [0.04, 0.1]
-
-
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=20)
-for delta in deltas:
-    label = 'X_{}_delta_{}_amp_eq'.format(X, delta)
-    solver = DetEvolution1D()
-    solver.load(label)
-    # solver.rescale_to_standard()
-    phi = solver.phi[-2]
-    plt.plot(phi, label='$\Delta={}$'.format(delta))
-
-
-plt.xticks([])
-plt.yticks([-1, 0, 1],
-            [r'$\phi_\mathrm{B}$', r'$\phi_\mathrm{t}$', r'$-\phi_\mathrm{B}$'])
-plt.ylim([-1.1, 1.1])
-plt.xlabel(r'$x$')
-plt.legend()
-plt.tight_layout()
-plt.savefig('amp_eq.pdf')
-plt.close()
+# plt.plot(x, X/n, 'x', label=r'simulations')
+# plt.axhline(y=2*np.pi/qc, color='k', label=r'$2\pi/q_\mathrm{c}$')
+# plt.ylabel(r'Wavelength')
+# plt.xlabel(r'$\log(\Delta)$')
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig('wavelength_ampeq.pdf')
+# plt.close()
+#
+# X = 300
+# deltas = [0.04, 0.1]
+#
+#
+# plt.rc('text', usetex=True)
+# plt.rc('font', family='serif', size=20)
+# for delta in deltas:
+#     label = 'X_{}_delta_{}_amp_eq'.format(X, delta)
+#     solver = DetEvolution1D()
+#     solver.load(label)
+#     # solver.rescale_to_standard()
+#     phi = solver.phi[-2]
+#     plt.plot(phi, label='$\Delta={}$'.format(delta))
+#
+#
+# plt.xticks([])
+# plt.yticks([-1, 0, 1],
+#             [r'$\phi_\mathrm{B}$', r'$\phi_\mathrm{t}$', r'$-\phi_\mathrm{B}$'])
+# plt.ylim([-1.1, 1.1])
+# plt.xlabel(r'$x$')
+# plt.legend()
+# plt.tight_layout()
+# plt.savefig('amp_eq.pdf')
+# plt.close()

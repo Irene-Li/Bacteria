@@ -8,13 +8,15 @@ from scipy.ndimage.filters import gaussian_filter
 # Define the other parameters
 phi_shift = 10
 M1 = 1
-alpha = 1
+alpha = 0.2
 kappa = 1
 sigma = np.sqrt(8*kappa*alpha/9)
 
 # Plot graph
 phi_ts = np.arange(-0.99, -0.6, 0.002)
-us = np.exp(np.arange(-12, -5, 0.02))
+us = np.exp(np.arange(-15, -8, 0.02))
+# phi_ts = np.arange(-0.99, 0, 0.001)
+# us = np.exp(np.arange(-14.5, -7.5, 0.02))
 
 g_v = np.empty((len(phi_ts), len(us)), dtype=np.float64)
 radii = np.empty((len(phi_ts), len(us)), dtype=np.float64)
@@ -67,18 +69,18 @@ for (i, phi_target) in enumerate(phi_ts):
             g_v[i,j] = -term1+term2-term3+term4
             radii[i, j] = 1
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=15)
+plt.rc('font', family='serif', size=18)
 max = np.max(np.abs(g_v))
 min = - max
 x, y = np.meshgrid(np.log10(us*phi_shift), phi_ts)
 
 plt.pcolor(x, y, g_v, vmin=min, vmax=max, edgecolors='face', cmap='seismic', alpha=1)
-plt.colorbar(ticks=[-0.01, 0, 0.01])
-plt.yticks(np.arange(-0.99, -0.6, 0.1))
+plt.colorbar(ticks=[0])
+plt.yticks(np.arange(-1, -0.6, 0.1))
 plt.xlabel(r'$\log(-u M_\mathrm{A} \phi_\mathrm{a})$')
 plt.ylabel(r'$\phi_\mathrm{t}$')
-plt.title(r'$g_2(R_\mathrm{c})$')
-plt.text(-2, -0.93, r'No stable radius',  {'color': 'k', 'fontsize': 18, 'ha': 'center', 'va': 'center',
+plt.title(r'$j_2(R_\mathrm{c})$')
+plt.text(-3.3, -0.93, r'No stable radius',  {'color': 'k', 'fontsize': 18, 'ha': 'center', 'va': 'center',
           'bbox': dict(boxstyle="round", fc="w", ec="k", pad=0.2)})
 plt.tight_layout()
 plt.savefig('stability.pdf')
@@ -87,11 +89,11 @@ plt.close()
 # plt.contourf(x, y, radii, levels=[-0.5, 0.5, 1.5, 2.5], cmap=plt.cm.Blues)
 # plt.xlabel(r'$\log(- u M_\mathrm{A} \phi_\mathrm{a})$')
 # plt.ylabel(r'$\phi_\mathrm{t}$')
-# plt.text(-1.9, -0.9, r'uniform',  {'color': 'k', 'fontsize': 15, 'ha': 'center', 'va': 'center',
+# plt.text(-2.9, -0.9, r'uniform',  {'color': 'k', 'fontsize': 18, 'ha': 'center', 'va': 'center',
 #           'bbox': dict(boxstyle="round", fc="w", ec="k", pad=0.2)})
-# plt.text(-2.7, -0.3, r'spinodal decomposition',  {'color': 'k', 'fontsize': 15, 'ha': 'center', 'va': 'center',
+# plt.text(-3.7, -0.3, r'spinodal decomposition',  {'color': 'k', 'fontsize': 18, 'ha': 'center', 'va': 'center',
 #           'bbox': dict(boxstyle="round", fc="w", ec="k", pad=0.2)})
-# plt.text(-3.2, -0.71, r'nucleation', {'color': 'k', 'fontsize': 15, 'ha': 'center', 'va': 'center',
+# plt.text(-4.2, -0.71, r'nucleation', {'color': 'k', 'fontsize': 18, 'ha': 'center', 'va': 'center',
 #           'bbox': dict(boxstyle="round", fc="w", ec="k", pad=0.2)})
 # plt.tight_layout()
 # plt.savefig('spinodal_binodal.pdf')
