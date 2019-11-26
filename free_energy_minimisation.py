@@ -18,10 +18,17 @@ class FreeEnergy:
         self.k = k
         self.c = c
         self.m = m
+        self.a_eff = self.a + self.k*self.m**2
         self.sigma = np.sqrt(self.a*self.k/18)
 
     def initialise(self, Nterms):
         pass
+
+    def free_energy_for_uniform(self):
+        phi_t = - (self.c/self.b)**(1/3)
+        f = self._f(phi_t)
+        f_nl = self.a_eff*phi_t**2/2
+        return f + f_nl
 
     def free_energy_nl(self, L, A, B, ratio):
         chi = self.m*L*self.lattice_scale_factor/(2*np.pi)
@@ -35,7 +42,7 @@ class FreeEnergy:
         term1 = self.lattice_sym*(chi*ratio)**2*sum
         area_ratio = np.pi/self.lattice_scale_factor*ratio**2
         term2 = (A*area_ratio+B*(1-area_ratio))**2
-        return (term1+term2)/2
+        return self.a_eff*(term1+term2)/2
 
     def free_energy_local(self, L, A, B, ratio):
         area_ratio = np.pi/self.lattice_scale_factor*ratio**2
@@ -84,7 +91,7 @@ class FreeEnergySquare(FreeEnergy):
         self.lattice_sym = 4
 
     def _ratio(self, A, B):
-        return np.sqrt((- self.c - B**3)/(A**3 - B**3)/np.pi)
+        return np.sqrt((- self.c - self.b*B**3)/(A**3 - self.b*B**3)/np.pi)
 
     def _distance(self, nx, ny):
         return np.sqrt(nx**2+ny**2)
@@ -98,14 +105,14 @@ class FreeEnergyTriangle(FreeEnergy):
         self.lattice_sym = 6
 
     def _ratio(self, A, B):
-        return np.sqrt(np.sqrt(3)*(-self.c - B**3)/(2*np.pi*(A**3-B**3)))
+        return np.sqrt(np.sqrt(3)*(-self.c - self.b*B**3)/(2*np.pi*self.b*(A**3-B**3)))
 
     def _distance(self, nx, ny):
         return np.sqrt(nx**2+ny**2+nx*ny)
 
 
 def plot_free_energy(objs, A, B, Lmax, deltaL):
-    legends = ['square lattice', 'triangular lattice']
+    legends = ['square lattice', 'hexagonal lattice']
     Ls = np.arange(1, Lmax, deltaL)
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=16)
@@ -114,8 +121,10 @@ def plot_free_energy(objs, A, B, Lmax, deltaL):
         free_energy = obj.total_free_energy_for_range(Lmax, deltaL, A, B)
         plt.plot(Ls, free_energy, label=legends[i])
 
+    plt.axhline(y=objs[0].free_energy_for_uniform(), linestyle='--', label='uniform state')
+
     plt.legend()
-    plt.ylim([-0.25, 0])
+    plt.ylim([1.1*min(free_energy), -min(free_energy)*0.5])
     plt.ylabel(r'$V^{-1}\mathcal{F}$')
     plt.xlim([0, Lmax])
     plt.xlabel(r'$L$')
@@ -124,8 +133,11 @@ def plot_free_energy(objs, A, B, Lmax, deltaL):
     plt.close()
 
 def minimise(obj, Lmax):
-    As = np.arange(0.5, 2.1, 0.1)
-    Bs = np.arange(-2, -0.4, 0.1)
+    step_size = 0.05
+    low = 0.6
+    high = 1.8
+    As = np.arange(low, high+step_size, step_size)
+    Bs = np.arange(-high, -low+step_size, step_size)
     min_free_energy = np.empty((len(As), len(Bs)), dtype='float64')
     print(min_free_energy.shape)
     for (i, A) in enumerate(As):
@@ -134,13 +146,14 @@ def minimise(obj, Lmax):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=16)
 
-    x = np.arange(0.45, 2.15, 0.1)
-    y = np.arange(-2.05, -0.35, 0.1)
+    x = np.arange(low-step_size*0.5, high+step_size*1.49, step_size)
+    y = np.arange(-high-step_size*0.5, -low+step_size*1.49, step_size)
+    print(x.shape, y.shape)
     plt.pcolor(x, y, min_free_energy, edgecolors='face', cmap='plasma')
-    plt.colorbar(ticks=[0, -0.1, -0.2])
+    plt.colorbar(ticks=[0, -0.02, -0.04])
     plt.xlabel(r'$\phi_1$')
-    plt.xticks([0.5, 1, 1.5, 2])
-    plt.yticks([-2, -1.5, -1, -0.5])
+    plt.xticks([0.6, 1, 1.4, 1.8])
+    plt.yticks([-1.8, -1.4, -1, -0.6])
     plt.ylabel(r'$\phi_2$')
     plt.tight_layout()
     plt.savefig('min_free_energy.pdf')
@@ -149,10 +162,10 @@ def minimise(obj, Lmax):
 
 
 if __name__ == '__main__':
-    a = 1
-    b = 1
+    a = 0.2
+    b = 0.2
     k = 1
-    c = 0.1
+    c = 0.04
     m = 0.01
     Nterms = 20
 
@@ -160,5 +173,5 @@ if __name__ == '__main__':
     tri_obj = FreeEnergyTriangle(a, b, k, c, m)
     sq_obj.initialise(Nterms)
     tri_obj.initialise(Nterms)
-    plot_free_energy([sq_obj, tri_obj], 1, -1, 1000, 1)
-    # minimise(tri_obj, 1000)
+    # plot_free_energy([sq_obj, tri_obj], 1, -1, 1000, 1)
+    minimise(tri_obj, 1000)
