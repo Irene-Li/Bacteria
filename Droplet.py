@@ -38,7 +38,7 @@ class Droplet():
             print("must have either pbc or finite as boundary condition")
     def plot_r_dot_single(self, us, phi_ts):
         plt.rc('text', usetex=True)
-        plt.rc('font', family='serif', size=16)
+        plt.rc('font', family='serif', size=17)
         for u in us:
             for phi_t in phi_ts:
                 self.u = u
@@ -48,7 +48,7 @@ class Droplet():
                 Rmax = 10/self.k_dilute
                 R = np.arange(Rmin, Rmax, 0.01)
                 r_dot = self.R_dot_single_droplet(R)
-                plt.plot(R, r_dot, label=r"$-uM_\mathrm{{A}}\phi_\mathrm{{a}}={},\phi_\mathrm{{t}}={}$".format(u*self.phi_shift, phi_t))
+                plt.plot(R, r_dot, label=r"$u_\mathrm{{eff}}={},\phi_\mathrm{{t}}={}$".format(u*self.phi_shift, phi_t))
         plt.axhline(y=0, c='k')
         plt.ylim([-0.003, 0.004])
         plt.yticks([0], [r'$0$'])
@@ -62,21 +62,43 @@ class Droplet():
         plt.savefig('r_dot_single_droplet.pdf')
         plt.close()
 
+    def plot_r_dot_g2(self):
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif', size=17)
+        Rmin = self.gamma/self.c_dilute*0.1
+        Rmax = 0.8/self.k_dilute
+        R = np.arange(Rmin, Rmax, 0.01)
+        r_dot = self.R_dot_single_droplet(R)
+        g2 = self.g_v(R, 2)
+
+        plt.axhline(y=0, c='k')
+        plt.plot(R, r_dot, label=r'$\partial_t R$')
+        plt.plot(R, g2, label=r'$j_2(R)$')
+        plt.ylim([-0.001, 0.006])
+        plt.yticks([0], [r'$0$'])
+        plt.xlim([0, Rmax])
+        plt.xticks(np.arange(0, Rmax, 5))
+        plt.xlabel(r'$R$')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('j2.pdf')
+        plt.close()
+
 
     def plot_r_dot_mult(self, n_list):
         plt.rc('text', usetex=True)
-        plt.rc('font', family='serif', size=15)
+        plt.rc('font', family='serif', size=17)
         plt.axhline(y=0, c='k')
         ymax = 0
         ymin = -np.inf
+        Rmax = 0.6/self.k_dilute
         for N in n_list:
-            (new_ymax, new_ymin) = self._plot_multiple_droplet(N)
+            (new_ymax, new_ymin) = self._plot_multiple_droplet(N, Rmax)
             ymax = max(ymax, new_ymax)
             ymin = max(ymin, new_ymin)
         plt.legend()
         plt.ylim([ymin, 1.1*ymax])
         plt.yticks([0], [r'$0$'])
-        Rmax = 0.5/self.k_dilute
         plt.xlim([0, Rmax])
         plt.xticks(np.arange(0, Rmax, 5))
         plt.xlabel(r'$R$')
@@ -94,7 +116,7 @@ class Droplet():
             R_sim[i], error_sim[i], N_sim[i] = self._obtain_pattern_length_skimage(label)
 
         # extract theoretical predictions for similar range of N
-        N_th = np.arange(min(N_sim)-1, max(N_sim)+1)
+        N_th = np.arange(min(N_sim)-1, max(N_sim)+2)
         R_th = np.empty_like(N_th, dtype='float64')
         Rmax = 100/self.k_dilute
         for (i, N) in enumerate(N_th):
@@ -105,12 +127,13 @@ class Droplet():
             R_th[i] = self._find_root_of_r_dot(N, Rmin, Rmax)
 
         plt.rc('text', usetex=True)
-        plt.rc('font', family='serif', size=15)
-        plt.errorbar(N_sim, R_sim, yerr=error_sim, fmt='x', label='simulations')
-        plt.plot(N_th, R_th, '--', label='theory')
-        plt.xticks(N_th[::2])
+        plt.rc('font', family='serif', size=17)
+        plt.errorbar(N_sim/self.A*1e4, R_sim, yerr=error_sim, fmt='x', label='simulations')
+        plt.plot(N_th/self.A*1e4, R_th, '--', label='theory')
+        plt.xlim([N_th[0]/self.A*1e4, N_th[-1]/self.A*1e4])
+        plt.xticks([1, 1.5, 2, 2.5])
         plt.legend()
-        plt.xlabel(r'Number of droplets')
+        plt.xlabel(r'$N/V$ [$10^{-4}$]')
         plt.ylabel(r'$R_\mathrm{s}$')
         plt.tight_layout()
         plt.savefig('n_against_r.pdf')
@@ -122,14 +145,14 @@ class Droplet():
         for (i, label) in enumerate(labels):
             _, _, N[i] = self._obtain_pattern_length_skimage(label)
         plt.rc('text', usetex=True)
-        plt.rc('font', family='serif', size=15)
+        plt.rc('font', family='serif', size=17)
         x = 1/np.asarray(epsilons)
-        y = np.log(N)
+        y = np.log(N/self.A)
         poly = np.poly1d(np.polyfit(x, y, 1))
         plt.plot(x, y, 'x', label='simulations')
         plt.plot(x, poly(x), '--', label=r'straight line fit')
         plt.xlabel(r'$\epsilon^{-1}$')
-        plt.ylabel(r'$\log(N)$')
+        plt.ylabel(r'$\log(N/V)$')
         plt.legend()
         plt.tight_layout()
         plt.savefig('epsilon_against_n.pdf')
@@ -228,8 +251,10 @@ class Droplet():
 
         term1 = b0_dense*(self.k_dense**2)*(iv(0,z_dense) - iv(1,z_dense)/z_dense)
         term2 = -b0_dilute*(self.k_dilute**2)*(kn(0,z_dilute) - kn(1,z_dilute)/z_dilute)
-        term3 = (self.k_dense*iv(v-1,z_dense)/iv(v,z_dense)-v/R)*(extra_term - b0_dense*k*iv(1, z_dense))
-        term4 = (self.k_dilute*kn(v-1,z_dilute)/kn(v,z_dilute)-v/R)*(extra_term + b0_dilute*l*kn(1, z_dilute))
+        term3 = (self.k_dense*iv(v-1,z_dense)/iv(v,z_dense)-v/R)
+        term3 *= (extra_term - b0_dense*self.k_dense*iv(1, z_dense))
+        term4 = (self.k_dilute*kn(v-1,z_dilute)/kn(v,z_dilute)-v/R)
+        term4 *= (extra_term + b0_dilute*self.k_dilute*kn(1, z_dilute))
 
         return -term1+term2-term3+term4
 
@@ -279,14 +304,13 @@ class Droplet():
         # print("R = {}, N = {}, Nmin = {}, Nmax = {}".format(R, N, Nmin, Nmax))
         return self._find_stable_radius(new_N, new_R, tol, Nmin, Nmax)
 
-    def _plot_multiple_droplet(self, N):
+    def _plot_multiple_droplet(self, N, Rmax):
         Rmin = self.gamma/self.c_dilute*0.8
-        Rmax = 0.5/self.k_dilute
         R = np.arange(Rmin, Rmax, 0.01)
         R_dot = self.R_dot_mult_droplets(R, N)
         omega_plus = 1.5*self.omega_plus(R, N)
-        plt.plot(R, R_dot, label=r'$\dot{{R}}$ for $N={}$'.format(N))
-        plt.plot(R, omega_plus, label=r'$\omega_+$ for $N = {}$'.format(N))
+        plt.plot(R, R_dot, label=r'$\dot{{R}}$ for $N/V={:.4f}$'.format(N/self.A))
+        plt.plot(R, omega_plus, label=r'$\omega_+$ for $N/V ={:.4f}$'.format(N/self.A))
         return np.max(R_dot), max(R_dot[0], R_dot[-1])
 
     def _obtain_pattern_length_skimage(self, label):
@@ -410,15 +434,43 @@ class Droplet():
 
 
 if __name__ == '__main__':
-    phi_targets = [-0.7, -0.8]
-    us = [1e-4, 5e-5]
+    n_list = [13, 125]
     A = 256**2
-    solver = Droplet(A)
-    solver.set_boundary_conditions('pbc')
-    solver.plot_r_dot_single(us, phi_targets)
+
+    ## Calculate single droplet r_dot against r
+    # solver = Droplet(A)
     # solver.calculate_params()
+    # phi_targets = [-0.7, -0.8]
+    # us = [1e-4, 5e-5]
+    # solver.plot_r_dot_single(us, phi_targets)
+
+    ## Plot r_dot and omega_+ for multiple droplets
+    phi_target = -0.7
+    u = 5e-5
+    solver = Droplet(A, phi_target=phi_target, u=u)
+    solver.set_boundary_conditions('pbc')
+    solver.calculate_params()
+    n_list = [13, 125]
+    solver.plot_r_dot_mult(n_list)
 
 
+
+
+
+
+    ## plot r_dot and g2 against r
+    # solver = Droplet(A, phi_target=phi_target, u=u)
+    # solver.calculate_params()
+    # phi_target = -0.6
+    # u = 4e-5
+    # solver.plot_r_dot_g2()
+
+    ## plot epsilons again r
+    # solver = Droplet(A)
+    # solver.set_boundary_conditions('pbc')
+    # solver.calculate_params()
+    # phi_target = -0.6
+    # u = 5e-5
     # epsilons = [0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.1, 0.12]
     # orders = ['_3', '_4', '_2', '_2', '', '', '', '']
     # labels = ['phi_t_{}_u_{}_epsilon_{}{}'.format(phi_target, u, epsilon, order)

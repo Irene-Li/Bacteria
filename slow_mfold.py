@@ -1,5 +1,5 @@
 import numpy as np
-from FdEvolution import *
+from DetEvolution1D import *
 import matplotlib.pyplot as plt
 import os
 
@@ -26,7 +26,7 @@ plt.rc('font', family='serif', size=15)
 
 # Read in the evolution phase space
 
-solver = FdEvolution()
+solver = DetEvolution1D()
 solver.load(label)
 
 phi = solver.phi[25:-1]
@@ -59,7 +59,7 @@ if plot_slow_mfold:
 
 	phi_bar_dot = []
 	phi_bar = []
-	solver = FdEvolution()
+	solver = DetEvolution1D()
 	solver.load(labels[0])
 
 	for label in labels:
@@ -91,8 +91,8 @@ plt.plot(phi_bar_evol, phi_bar_dot_evol, 'k-', label='time evolution')
 
 
 
-plt.xlabel(r'$\bar{\phi}$')
-plt.ylabel(r'$\partial_t\bar{\phi}$')
+plt.xlabel(r'$\varphi$')
+plt.ylabel(r'$\partial_t\varphi$')
 plt.xlim([min_phi_bar, max_phi_bar])
 # plt.ylim([-1, +0.5])
 plt.legend(loc='lower left')
