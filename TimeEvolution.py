@@ -122,7 +122,7 @@ class TimeEvolution:
 								slice(0, X, self.dx*x_grid_size)]
 
 		plt.rc('text', usetex=True)
-		plt.rc('font', family='serif', size=20)
+		plt.rc('font', family='serif', size=25)
 
 		plt.figure(figsize=(8, 8))
 		plt.pcolor(xmesh, ymesh, phi_plot, vmin=-1, vmax=1, cmap='seismic', edgecolors='face', alpha=1)

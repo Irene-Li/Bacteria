@@ -21,13 +21,14 @@ phi_s = - np.sqrt(1/(3))
 phi_b = - 1
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=15)
+plt.rc('font', family='serif', size=17)
 
 
 # Read in the evolution phase space
 
 solver = DetEvolution1D()
 solver.load(label)
+solver.plot_evolution(label)
 
 phi = solver.phi[25:-1]
 phi_bar_dot_evol = np.mean(-(phi - solver.phi_target) * (phi + solver.phi_shift), axis=1)
@@ -87,7 +88,7 @@ if plot_double_interface:
 if plot_slow_mfold:
 	plt.plot(phi_bar, phi_bar_dot, 'gx', markersize=5, label='slow manifold')
 
-plt.plot(phi_bar_evol, phi_bar_dot_evol, 'k-', label='time evolution')
+plt.plot(phi_bar_evol, phi_bar_dot_evol, 'k-')
 
 
 
