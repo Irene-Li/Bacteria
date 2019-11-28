@@ -27,7 +27,7 @@ x = np.squeeze(x)
 y = np.squeeze(y)
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=15)
+plt.rc('font', family='serif', size=18)
 plt.contourf(x, y, rate, levels, cmap=plt.cm.Blues)
 plt.xlabel(r'$- \phi_\mathrm{a}$')
 plt.ylabel(r'$\phi_\mathrm{t}$')

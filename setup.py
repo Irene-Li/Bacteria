@@ -11,3 +11,12 @@ setup(
 	name = 'pseudospectral',
 	ext_modules = cythonize(ext, annotate=True)
 )
+
+ext = [Extension("minimise", sources=['minimise.pyx'],
+	 include_dirs=[numpy.get_include()])
+	 ]
+
+setup(
+	name = 'minimise',
+	ext_modules = cythonize(ext, annotate=True)
+)
