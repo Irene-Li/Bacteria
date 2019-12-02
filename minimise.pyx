@@ -3,7 +3,7 @@ from scipy.special.cython_special cimport jv
 cimport numpy as np
 cimport cython
 from cython.view cimport array
-from libc.math cimport sqrt, fmin, M_PI, pow, sinh
+from libc.math cimport sqrt, fmin, M_PI, pow, sinh, exp
 
 cdef class FreeEnergy(object):
   cdef double a, b, k, c, m, a_eff, sigma, lattice_scale_factor
@@ -22,10 +22,14 @@ cdef class FreeEnergy(object):
     self.m = m
     self.c = - self.b*phit**3
 
+  cpdef double phit(self):
+    return -pow(self.c/self.b, 1.0/3.0)
+
   def initialise(self, int Nterms):
     pass
 
-  def free_energy_for_uniform(self):
+  @cython.cdivision(True)
+  cpdef double free_energy_for_uniform(self):
     phi_t = - pow(self.c/self.b, 1.0/3.0)
     f = self._f(phi_t)
     f_nl = self.a_eff*phi_t*phi_t/2.0
@@ -33,23 +37,61 @@ cdef class FreeEnergy(object):
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
-  def phases(self, Lmax):
-    cdef double [:] logms, ms, phits
+  @cython.cdivision(True)
+  def phases(self, double logm_min, double logm_max, int N):
+    cdef int [:, :] phases
+    cdef Py_ssize_t i, j
+    cdef double logm, phit, delta_logm, delta_phit, m, uniform, lat_min, lam_min
+    phases = array(shape=(N,N), itemsize=sizeof(int), format='i')
+    logm = logm_min
+    delta_logm = (logm_max - logm_min)/(N-1)
+    delta_phit = 1.0/(N-1)
+    for i in range(N):
+      phit = -1.0
+      for j in range(N):
+        m = exp(logm)
+        self.m = m
+        self.c = - self.b*pow(phit, 3)
+        print(m, phit)
+        lat_min, lam_min = self.minimise(10.0/m, phit)
+        uniform = self.free_energy_for_uniform()
+        phases[j, i] = np.argmin([uniform, lat_min, lam_min])
+        phit += delta_phit
+      logm += delta_logm
+    np.save("phases.npy", phases)
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
   cpdef (double, double) minimise(self, double Lmax, double phi_t):
-    cdef double diff, lat_min, lam_min, f_lat, f_lam, A, B
-    diff = fmin(phi_t+1, 0.1)
+    cdef double diff, lat_min, lam_min, f_lat, f_lam, A, B, phit
+    diff = 0.1
     lat_min = 0
     lam_min = 0
-    for A in [1-diff, 1, 1+diff]:
-      for B in [-1-diff, -1, -1+diff]:
+    phit = self.phit()
+    for A in np.arange(-phit, 1-phit, diff):
+      for B in np.arange(-1+phit, phit, diff):
         f_lat = self.min_free_energy_lattice(Lmax, 1, -1)
         f_lam = self.min_free_energy_laminar(Lmax, 1, -1)
         lat_min = fmin(f_lat, lat_min)
         lam_min = fmin(f_lam, lam_min)
     return (lat_min, lam_min)
+
+
+  @cython.wraparound(False)
+  @cython.boundscheck(False)
+  def minimise_over_AB(self, double Lmax, int N):
+    cdef double phit
+    cdef double [:, :] minimums
+    cdef double [:] As, Bs
+    phit = self.phit()
+    As = np.linspace(-phit, 1-phit, N)
+    Bs = np.linspace(-1+phit, phit, N)
+    minimums = array(shape=(N,N), itemsize=sizeof(np.float64_t), format='d')
+    for (i, A) in enumerate(As):
+      for (j, B) in enumerate(Bs):
+        minimums[j, i] = self.min_free_energy_lattice(Lmax, A, B)
+    np.save("minimums.npy", minimums)
+
 
   @cython.wraparound(False)
   @cython.boundscheck(False)
@@ -96,7 +138,7 @@ cdef class FreeEnergy(object):
   @cython.cdivision(True)
   cdef double free_energy_nl(self, double L, double A, double B, double r):
     cdef double chi, sum, area_ratio, term1, term2
-    cdef int nx, ny
+    cdef Py_ssize_t nx, ny
     chi = self.m*L*self.lattice_scale_factor/(2.0*M_PI)
     sum = 0.0
     for nx in range(1, self.Nterms):
@@ -120,9 +162,9 @@ cdef class FreeEnergy(object):
   @cython.wraparound(False)
   @cython.boundscheck(False)
   @cython.cdivision(True)
-  cdef double min_free_energy_lattice(self, double Lmax, double A, double B):
+  cpdef double min_free_energy_lattice(self, double Lmax, double A, double B):
     cdef double r, minimum, f, deltaL, L
-    cdef int i
+    cdef Py_ssize_t i
     deltaL = Lmax/1000.0
     r = self._ratio(A, B)
     minimum = 0.0
@@ -138,7 +180,7 @@ cdef class FreeEnergy(object):
   @cython.cdivision(True)
   cdef double min_free_energy_laminar(self, double Lmax, double A, double B):
     cdef double min, r, f, deltaL, L
-    cdef int i
+    cdef Py_ssize_t i
     deltaL = Lmax/1000.0
     r = self._ratio_laminar(A, B)
     min = 0.0

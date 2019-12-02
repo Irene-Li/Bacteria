@@ -10,74 +10,74 @@ def plot_free_energy(objs, A, B, Lmax):
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=16)
 
+    f_uni = objs[0].free_energy_for_uniform()
+    f_laminar = objs[0].free_energy_for_laminar_range(Lmax, A, B)
+    plt.axhline(y=f_uni, color='k', linestyle='--', label=r'uniform')
+    plt.plot(Ls, f_laminar, label=r'lamellar')
     for (i, obj) in enumerate(objs):
         free_energy = obj.total_free_energy_for_range(Lmax, A, B)
         plt.plot(Ls, free_energy, label=legends[i])
-    f_uni = objs[0].free_energy_for_uniform()
-    f_laminar = objs[0].free_energy_for_laminar_range(Lmax, A, B)
-    plt.axhline(y=f_uni, linestyle='--', label=r'uniform state')
-    plt.plot(Ls, f_laminar, label=r'laminar')
-    plt.legend()
-    plt.ylim([1.1*min(free_energy), 2*f_uni - min(free_energy)])
+    plt.ylim([1.01*np.amin(free_energy), 2*f_uni - 1.01*np.amin(free_energy)])
+    plt.yticks([])
+    plt.xticks(np.linspace(0, Lmax, 5))
     plt.ylabel(r'$V^{-1}\mathcal{F}$')
     plt.xlim([0, Lmax])
     plt.xlabel(r'$L$')
+    plt.legend(loc='upper right')
     plt.tight_layout()
-    plt.show()
-    # plt.savefig('total_free_energy.pdf')
+    plt.savefig('total_free_energy.pdf')
     plt.close()
 
-def plot_minimise(obj, Lmax):
-    step_size = 0.05
-    low = 0.6
-    high = 1.8
-    As = np.arange(low, high+step_size, step_size)
-    Bs = np.arange(-high, -low+step_size, step_size)
-    min_free_energy = np.empty((len(As), len(Bs)), dtype='float64')
-    print(min_free_energy.shape)
-    for (i, A) in enumerate(As):
-        for (j, B) in enumerate(Bs):
-            min_free_energy[j, i] = obj.min_free_energy(Lmax, A, B)
+def plot_minimise(obj, N):
+    min_free_energy = np.load("minimums.npy")
+    phit = obj.phit()
+    step_size = -2*phit/(N-1)
 
     plt.rc('text', usetex=True)
-    plt.rc('font', family='serif', size=16)
+    plt.rc('font', family='serif', size=17)
+    print(phit, min_free_energy.shape)
 
-    x = np.arange(low-step_size*0.5, high+step_size*1.49, step_size)
-    y = np.arange(-high-step_size*0.5, -low+step_size*1.49, step_size)
-    print(x.shape, y.shape)
-    plt.pcolor(x, y, min_free_energy, edgecolors='face', cmap='plasma')
-    plt.colorbar(ticks=[0, -0.02, -0.04])
+
+    # x = np.linspace(-phit-step_size*0.5, 2+phit+step_size*0.5, N+1)
+    # y = np.linspace(-2-phit-step_size*0.5, phit+step_size*0.5, N+1)
+    x = np.linspace(-phit, 2+phit, N)
+    y = np.linspace(-2-phit, phit, N)
+    i, j = np.unravel_index(np.argmin(min_free_energy), min_free_energy.shape)
+    print(x[j], y[i])
+    plt.contourf(x, y, min_free_energy, cmap='plasma')
+    plt.colorbar(ticks=[0])
     plt.xlabel(r'$\phi_1$')
-    plt.xticks([0.6, 1, 1.4, 1.8])
-    plt.yticks([-1.8, -1.4, -1, -0.6])
+    plt.xticks([0.8, 1, 1.2])
+    plt.yticks([-1.2, -1, -0.8])
     plt.ylabel(r'$\phi_2$')
     plt.tight_layout()
     plt.savefig('min_free_energy.pdf')
     plt.close()
 
-def phase_diagram(obj, Lmax):
-    logms = np.arange(-10, -2, 2)
-    ms = np.exp(logms)
-    phits = np.arange(-1, 0, 0.2)
-    phases = np.empty((len(phits), len(ms)), dtype='int')
-    for (i, m) in enumerate(ms):
-        for (j, phit) in enumerate(phits):
-            obj.set_m_phit(m, phit)
-            print(m, phit)
-            Lmax = 10/m
-            lat_min, lam_min = obj.minimise(Lmax, phit)
-            uniform = obj.free_energy_for_uniform()
-            phases[j, i] = np.argmin([uniform, lat_min, lam_min])
-    # plt.pcolor(logms, phits, phases)
-    # plt.show()
+def plot_phase_diagram(logm_min, logm_max, N):
+    phases = np.load("phases.npy")
+    logms = np.linspace(logm_min, logm_max, N)
+    phits = np.linspace(-1, 0, N)
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif', size=16)
+
+    plt.pcolor(logms, phits, phases, cmap="Blues")
+    plt.xlabel(r'$\log(m)$')
+    plt.ylabel(r'$\phi_\mathrm{t}$')
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == '__main__':
     a = 0.2
     b = 0.2
     k = 1
-    c = 0.0
+    c = 0.08
     m = np.sqrt(1e-4)
     Nterms = 20
+    N = 41
+    logm_min = -10
+    logm_max = -3
 
     print(np.sqrt(2*k/a))
 
@@ -85,9 +85,12 @@ if __name__ == '__main__':
     tri_obj = FreeEnergyTriangle(a, b, k, c, m)
     sq_obj.initialise(Nterms)
     tri_obj.initialise(Nterms)
-    # plot_free_energy([sq_obj, tri_obj], 1, -1, 1000)
+    plot_free_energy([sq_obj, tri_obj], 0.855, -0.855, 400)
+    # phit = tri_obj.minimise_over_AB(1000, N)
+    # plot_minimise(tri_obj, N)
 
-    start_time = time.time()
-    phase_diagram(tri_obj, 800)
-    end_time = time.time()
-    print(end_time - start_time)
+    # start_time = time.time()
+    # tri_obj.phases(logm_min, logm_max, N)
+    # plot_phase_diagram(logm_min, logm_max, N)
+    # end_time = time.time()
+    # print(end_time - start_time)
