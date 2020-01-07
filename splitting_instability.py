@@ -76,10 +76,12 @@ x, y = np.meshgrid(np.log10(us*phi_shift), phi_ts)
 
 plt.pcolor(x, y, g_v, vmin=min, vmax=max, edgecolors='face', cmap='seismic', alpha=1)
 plt.colorbar(ticks=[0])
+cs = plt.contour(x, y, g_v, [0])
+plt.clabel(cs, fontsize=18, inline_spacing=8, fmt={0:r'$j_2 = 0.0$'})
 plt.yticks(np.arange(-1, -0.6, 0.1))
 plt.xlabel(r'$\log(-u M_\mathrm{A} \phi_\mathrm{a})$')
 plt.ylabel(r'$\phi_\mathrm{t}$')
-plt.title(r'$j_2(R_\mathrm{c})$')
+plt.title(r'$j_2(R_\mathrm{S})$')
 plt.text(-3.3, -0.93, r'No stable radius',  {'color': 'k', 'fontsize': 18, 'ha': 'center', 'va': 'center',
           'bbox': dict(boxstyle="round", fc="w", ec="k", pad=0.2)})
 plt.tight_layout()
