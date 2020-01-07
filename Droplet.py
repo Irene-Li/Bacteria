@@ -450,7 +450,7 @@ if __name__ == '__main__':
     solver = Droplet(A, phi_target=phi_target, u=u)
     solver.set_boundary_conditions('pbc')
     solver.calculate_params()
-    n_list = [13, 125]
+    n_list = [13, 85]
     solver.plot_r_dot_mult(n_list)
 
 
