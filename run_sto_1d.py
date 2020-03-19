@@ -6,15 +6,15 @@ from multiprocessing import Pool
 # parameters of the differential equation
 a = 0.1
 k = 1
-epsilon = 0.02
+epsilon = 0.01
 phi_shift = 10
 phi_target = 0
 
 # simulation parameters
-X = 800
+X = 2048
 dx = 1
-dt = 5e-3
-n_batches = 200
+dt = 5e-4
+n_batches = 100
 flat = True
 initial_value = phi_target
 ps = True
@@ -22,8 +22,8 @@ ps = True
 
 
 def run(u):
-    T = 5/u
-    label = 'u_{}_flat'.format(u)
+    T = 1e4
+    label = 'u_{}_dt_{}'.format(u, dt)
     print(label)
     start_time = time.time()
     solver = StoEvolution1D(epsilon, a, k, u, phi_target, phi_shift)
@@ -35,6 +35,6 @@ def run(u):
     end_time = time.time()
     print('time: {}'.format(end_time - start_time))
 
-us = [4e-5, 2e-5, 1e-5, 8e-6, 6e-6, 5e-6]
+us = [4e-5]
 with Pool(len(us)) as p:
     print(p.map(run, us))

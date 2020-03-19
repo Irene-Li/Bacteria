@@ -24,26 +24,23 @@ for (i, epsilon) in enumerate(epsilons):
 		# solver.plot_evolution(label, t_size=200, x_size=400)
 		# solver.plot_wavenum_evol(label)
 		phi = solver.phi[-average_over:]
-		# from skimage.feature import canny
-		# edges = canny(phi, sigma=10)
-		# wavenumbers = np.sum(edges, axis=-1)[1:-1]/(2*length)
+
 		cutoff = int(length/2)
 		amplitudes = np.absolute(fft(phi)[0:cutoff])
-		plt.plot(amplitudes[-1])
-		plt.show()
-		wavenumbers = np.argmax(amplitudes, axis=-1)
+		wavenumbers = 2*np.argmax(amplitudes, axis=-1)
 		means[i, k] = np.mean(wavenumbers)
 		error_bars[i, k] = np.std(wavenumbers)
 
 plt.rc('text', usetex=True)
-plt.rc('font', family='serif', size=15)
+plt.rc('font', family='serif', size=18)
 qc = np.sqrt(solver.a/(2*solver.k))
 x = np.log(us)
+colors = ['tab:blue', 'tab:orange']
 for (i, epsilon) in enumerate(epsilons):
 	y = np.log(length) - np.log(means[i])
 	poly = np.poly1d(np.polyfit(x, y, 1))
-	plt.errorbar(x, y, yerr=error_bars[i]/means[i], fmt='x', label=r'$\epsilon={{{}}}$'.format(epsilon))
-	plt.plot(x, poly(x), '--', label=r'gradient={:.4f}'.format(poly.c[0]))
+	plt.errorbar(x, y, yerr=error_bars[i]/means[i], color=colors[i], fmt='x', label=r'$\epsilon={{{}}}$, gradient={:.2f}'.format(epsilon, poly.c[0]))
+	plt.plot(x, poly(x), '--', color=colors[i])
 
 plt.xlabel(r'$\log(M_\mathrm{A} u )$')
 plt.ylabel(r'$\log(L)$')
