@@ -3,25 +3,26 @@ import numpy as np
 from TimeEvolution import *
 from StoEvolution2D import *
 
-twod = True
+twod = False
 
-phi_t = -0.5
-delta = 0.1
+phi_t = 0
+phi_s = 1.4
 u = 5e-5
-label = 'phi_t_{}_u_{}_5'.format(phi_t, u)
+epsilon = 0.07
+label = 'u_1e-07_epsilon_0.02_19'
 
 if twod:
     solver = StoEvolution2D()
 else:
-    solver = TimeEvolution()
+    solver = StoEvolution1D()
 solver.load(label)
 # solver.print_params()
 
 if twod:
     # solver.make_movie(label)
-    solver.plot_phase_space(label)
-    solver.plot_average(label)
+    solver.measure_domain(label)
 
 else:
-    solver.phi = solver.phi[250:]
-    solver.plot_evolution(label, t_size=250, x_size=300)
+    solver.plot_steady_state(label)
+    # solver.plot_evolution(label, t_size=100, x_size=512)
+    # solver.plot_wavelength_evol(label)

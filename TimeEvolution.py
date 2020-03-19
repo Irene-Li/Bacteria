@@ -212,10 +212,10 @@ class TimeEvolution:
 		plt.close()
 
 	def plot_wavenum_evol(self, label):
-		from skimage.feature import canny
-		edges = canny(self.phi, sigma=10)
-		wavenums = np.sum(edges, axis=-1)[1:-1]
-		plt.plot(wavenums)
+		cutoff = int(self.size/2)
+		amplitudes = np.absolute(fft(self.phi)[0:cutoff])
+		wavenumbers = np.argmax(amplitudes, axis=-1)
+		plt.plot(wavenumbers)
 		plt.xlabel(r'$t$')
 		plt.ylabel(r'$n$')
 		plt.tight_layout()
@@ -273,12 +273,14 @@ class TimeEvolution:
 		plt.close()
 
 	def plot_steady_state(self, label):
-		x = np.arange(0, (self.size)* self.dx, self.dx)
+		x = self.dx*np.arange(self.size)
 
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif')
+		print(x.size)
+		print(self.phi.shape)
 		plt.plot(x, self.phi[-2])
-		plt.axhline(y=self.phi_target, color='k')
+		# plt.axhline(y=self.phi_target, color='k')
 		plt.xlabel(r'$x$')
 		plt.ylabel(r'$\phi$')
 		plt.xlim([0, self.size*self.dx])
