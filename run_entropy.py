@@ -29,8 +29,8 @@ for delta_b in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
     # print('The simulation took: ')
     # print(end_time - start_time)
     #
-    # solver = EntropyModelAB()
-    # solver.load(label)
+    solver = EntropyModelAB()
+    solver.load(label)
 
     # solver.read_entropy(label)
     solver.entropy_with_modelAB(current=False, reg=reg)
