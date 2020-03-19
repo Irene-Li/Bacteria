@@ -97,8 +97,8 @@ class EntropyProduction(TimeEvolution):
 		max_index = np.argmax(eigenvalues)
 		goldstone_mode = eigenvectors[:, max_index]
 		self.projection_onto_gm = np.outer(goldstone_mode, goldstone_mode.conj())
-		self.first_order_matrix -= self.projection_onto_gm * reg
 		self.projection_out_gm = np.identity(self.size) - self.projection_onto_gm
+		self.first_order_matrix = self._project_matrix(self.first_order_matrix) + self.projection_onto_gm*reg
 
 	def _project_matrix(self, matrix):
 		return self.projection_out_gm.dot(matrix.dot(self.projection_out_gm))
@@ -114,9 +114,7 @@ class EntropyProductionFourier(EntropyProduction):
 			self._make_first_order_matrix = self._make_first_order_matrix_lin_bd
 			self._make_noise_matrix = self._make_noise_matrix_lin_bd
 
-	def calculate_entropy(self):
-		reg = 1
-
+	def calculate_entropy(self, reg=1):
 		self._make_laplacian_matrix()
 		self._make_first_order_matrix()
 		self._make_noise_matrix()
@@ -124,7 +122,7 @@ class EntropyProductionFourier(EntropyProduction):
 		self._make_correlation_matrix()
 
 
-		S = self._calculate_entropy_with_ss_dist()
+		S = self._calculate_entropy_with_ss_dist(reg=reg)
 		S_real = self._ifft_matrix(S)
 		self.entropy = S_real.diagonal()
 		print("total entropy production: ", np.sum(self.entropy))
@@ -150,37 +148,6 @@ class EntropyProductionFourier(EntropyProduction):
 		plt.legend()
 		plt.show()
 
-	def entropy_with_modelAB(self):
-		reg = 1
-
-		self._make_laplacian_matrix()
-		self._make_first_order_matrix()
-		self._make_gradient_matrix()
-		self._make_noise_matrix()
-		self._add_to_translational_dof(reg=reg)
-		self._make_correlation_matrix()
-
-		final_phi_fourier = fft(self.final_phi)
-		final_phi_cube_fourier = fft(self.final_phi**3)
-		mu1 = self.a*(-final_phi_fourier + final_phi_cube_fourier) - self.k*self._laplacian_fourier*final_phi_fourier
-		mu2 = self.u*(self.final_phi + self.phi_shift)*(self.final_phi - self.phi_target)
-
-		C = self._project_matrix(self.correlation_matrix)
-		C_reg = C + self.projection_onto_gm
-		C_inv = sl.inv(C_reg)
-		C_inv = self._project_matrix(C_inv)
-		C_inv_phi = C_inv.dot(final_phi_fourier)
-
-		J_1 = self._gradient_fourier * (mu1 + C_inv_phi)
-		J_1 = ifft(J_1)
-
-		J_2 = mu2 + ifft(C_inv_phi)
-		M_2 = self.u*(self.phi_shift+self.phi_target/2)
-
-		self.entropy_from_model_B_current = J_1*J_1
-		self.entropy_from_model_A_current = J_2*J_2/M_2
-		self.entropy = self.entropy_from_model_A_current + self.entropy_from_model_B_current
-
 	def _calculate_entropy_with_conjugate_currents(self):
 		# Take the square root of the noise matrix
 		K_diag = self.noise_matrix.diagonal()/2
@@ -197,10 +164,10 @@ class EntropyProductionFourier(EntropyProduction):
 
 		return S
 
-	def _calculate_entropy_with_ss_dist(self):
+	def _calculate_entropy_with_ss_dist(self, reg=1):
 		K_diag = self.noise_matrix.diagonal()/2
 		C = self._project_matrix(self.correlation_matrix)
-		C_reg = C + self.projection_onto_gm
+		C_reg = C + self.projection_onto_gm * reg
 		C_inv = sl.inv(C_reg)
 		C_inv = self._project_matrix(C_inv)
 
