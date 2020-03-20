@@ -12,10 +12,10 @@ n_batches = 100
 flat = True
 
 M2 = 5e-6
-T = 10/M2
+T = 100/M2
 reg = 5
 
-for delta_b in [0, 0.2]:
+for delta_b in [0.3, 0.4, 0.5]:
     # Label for the run
     label = 'M2_{}_delta_b_{}'.format(M2, delta_b)
     print(label)
