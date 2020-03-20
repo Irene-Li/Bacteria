@@ -14,10 +14,10 @@ class DetEvolution1D(TimeEvolution):
 		if ps:
 			self.evolve_ps(verbose)
 		else:
-			self.evolve_fd(verbose)
+			self.evolve_fd(verbose, add_random=True)
 
 
-	def evolve_fd(self, verbose=False):
+	def evolve_fd(self, verbose=False, add_random=False):
 		self.phi  = np.zeros((self.n_batches, self.size))
 		self._make_laplacian_matrix()
 
@@ -37,6 +37,8 @@ class DetEvolution1D(TimeEvolution):
 					self.phi[n] = phi
 					if verbose:
 						print('iteration: {}	mean: {}'.format(n, np.mean(phi)))
+					if add_random:
+						phi += self._random_init(0)
 					n += 1
 				phi = r.integrate(r.t+self.dt*small_batch)
 
