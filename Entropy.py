@@ -34,28 +34,45 @@ class EntropyProduction(TimeEvolution):
 	# Main function
 	# =============
 
-	def calculate_entropy():
+	def calculate_entropy(self):
 		# to be implemented in subclasses
 		pass
+
+	def calculate_entropy_ratio(self):
+		y = np.real(self.entropy)
+		ratio = np.max(y)/np.min(y)
+		print(ratio)
+		print((self.M1/self.M2)/(self.size/4)**2)
 
 	# ==================
 	# Plotting functions
 	# ==================
 
-	def plot_entropy(self, label):
+	def plot_entropy(self, label, current=False):
 		plt.rc('text', usetex=True)
-		plt.rc('font', family='serif', size=12)
+		plt.rc('font', family='serif', size=20)
 
 		x = np.arange(0, (self.size)* self.dx, self.dx)
 
 		plt.subplot(2, 1, 1)
-		plt.plot(x, np.real(self.entropy), 'k-')
-		plt.ylabel(r"$\dot{S}$")
+		plt.plot(x, np.real(self.entropy))
+		if current:
+			plt.ylabel(r"$\epsilon \dot{s}^\mathrm{AB}(x)$")
+		else:
+			plt.ylabel(r"$\dot{s}(x)$")
+		plt.yticks([0])
+		plt.ylim([1.1*min(np.min(np.real(self.entropy)), 0), max(np.real(self.entropy))*1.1])
+		plt.xlim([0, self.size*self.dx])
+		plt.xticks([])
 		plt.subplot(2, 1, 2)
-		plt.plot(x, self.final_phi, 'k-')
+		plt.plot(x, self.final_phi)
 		plt.ylabel(r"$\phi$")
 		plt.xlabel(r"$x$")
-		plt.tight_layout()
+		plt.xticks([])
+		plt.yticks([1, -1], [r'$\phi_\mathrm{B}$', r'$-\phi_\mathrm{B}$'])
+		plt.ylim([-1, 1])
+		plt.xlim([0, self.size*self.dx])
+		plt.tight_layout(pad=0.5)
 		plt.savefig("{}_entropy.pdf".format(label))
 		plt.close()
 
@@ -171,12 +188,12 @@ class EntropyProductionFourier(EntropyProduction):
 		C_inv = sl.inv(C_reg)
 		C_inv = self._project_matrix(C_inv)
 
-		A = - self.first_order_matrix_orig.todense()
-		B = np.einsum('i, ij->ij', 1/K_diag, A)
-		E = B - C_inv
-		K_dot_E = np.einsum('i,ij->ij', K_diag, E)
+		A = self.first_order_matrix_orig.todense()
+		B = np.einsum('i, ij->ij', 1/np.sqrt(K_diag), A)
+		sigma_dot_C_inv = np.einsum('i, ij->ij', np.sqrt(K_diag), C_inv)
+		E = B + sigma_dot_C_inv
 
-		S = K_dot_E.dot(C.dot(E.T.conj()))
+		S = E.dot(C.dot(E.T.conj()))
 		return S
 
 	def _make_first_order_matrix_lin_bd(self):
