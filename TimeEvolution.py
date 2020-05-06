@@ -308,7 +308,7 @@ class TimeEvolution:
 		self.phi_initial = self._enforce_bc(self.phi_initial)
 
 	def _random_init(self, phi_average):
-		noise_amplitude = self.a * self.k * self.dx**4/1e6
+		noise_amplitude = self.k * self.dx**4/1e4
 		phi_initial = phi_average + noise_amplitude * np.random.normal(size=self.size)
 		phi_initial = self._enforce_bc(phi_initial)
 		return phi_initial
