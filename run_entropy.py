@@ -12,14 +12,14 @@ n_batches = 100
 flat = True
 
 M2 = 5e-6
-T = 50/M2
+T = 10/M2
 reg = 5
 
-for delta_b in [0.03, 0.06, 0.13, 0.16, 0.23, 0.26, 0.32, 0.36]:
+for delta_b in [0.7]:
     # Label for the run
     label = 'M2_{}_delta_b_{}'.format(M2, delta_b)
     print(label)
-
+    #
     start_time = time.time()
     solver = EvolveModelAB(M1, k, M2, delta_b)
     solver.initialise(X, dx, T, dt, n_batches, 0, flat=flat)
