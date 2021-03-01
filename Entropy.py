@@ -51,38 +51,15 @@ class EntropyProduction(TimeEvolution):
 	def plot_entropy(self, label, current=False):
 		plt.rc('text', usetex=True)
 		plt.rc('font', family='serif', size=20)
-
-		x = np.arange(0, (self.size)* self.dx, self.dx)
-
-<<<<<<< HEAD
 		x = np.arange(0, (self.size)* self.dx, self.dx)
 
 		plt.subplot(2, 1, 1)
 		plt.plot(x, np.real(self.entropy))
 		plt.fill_between(x, np.real(self.entropy), alpha=0.2, facecolor='SteelBlue')
-=======
-		plt.subplot(2, 1, 1)
-		plt.plot(x, np.real(self.entropy))
->>>>>>> f64376efadc8795fad73d33c52f7bd3606649fd8
 		if current:
 			plt.ylabel(r"$\epsilon \dot{s}^\mathrm{AB}(x)$")
 		else:
 			plt.ylabel(r"$\dot{s}(x)$")
-<<<<<<< HEAD
-		plt.ylim([1.1*min(np.min(np.real(self.entropy)), 0), max(np.real(self.entropy))*1.1])
-		plt.gca().ticklabel_format(axis='y', style='sci', scilimits=[-2, 2], useOffset=False)
-		plt.xlim([0, (self.size-1)*self.dx])
-		plt.xticks([])
-		plt.subplot(2, 1, 2)
-		plt.plot(x, self.final_phi)
-		plt.fill_between(x, self.final_phi, y2=-1, alpha=0.2, facecolor='SteelBlue')
-		plt.ylabel(r"$\phi$")
-		plt.xlabel(r"$x$")
-		plt.xticks([])
-		plt.yticks([1, -1])
-		plt.ylim([-1, 1])
-		plt.xlim([0, (self.size-1)*self.dx])
-=======
 		plt.yticks([0])
 		plt.ylim([1.1*min(np.min(np.real(self.entropy)), 0), max(np.real(self.entropy))*1.1])
 		plt.xlim([0, self.size*self.dx])
@@ -95,7 +72,6 @@ class EntropyProduction(TimeEvolution):
 		plt.yticks([1, -1], [r'$\phi_\mathrm{B}$', r'$-\phi_\mathrm{B}$'])
 		plt.ylim([-1, 1])
 		plt.xlim([0, self.size*self.dx])
->>>>>>> f64376efadc8795fad73d33c52f7bd3606649fd8
 		plt.tight_layout(pad=0.5)
 		plt.savefig("{}_entropy.pdf".format(label))
 		plt.close()
