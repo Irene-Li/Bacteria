@@ -15,7 +15,7 @@ for (i, delta_b) in enumerate(delta_bs):
     solver = EntropyModelAB()
     solver.load(label)
     solver.read_entropy(label+'_phi')
-    # solver.plot_entropy(label+'_phi')
+    solver.plot_entropy(label+'_phi')
     entropies_phi[i] = np.real(np.sum(solver.entropy))
 
 plt.rc('text', usetex=True)

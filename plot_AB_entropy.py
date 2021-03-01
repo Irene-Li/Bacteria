@@ -17,7 +17,7 @@ for (i, delta_b) in enumerate(delta_bs):
     solver.load(label)
     solver.read_entropy(label+'_current')
     # solver.calculate_entropy_ratio()
-    # solver.plot_entropy(label+'_current', current=True)
+    solver.plot_entropy(label+'_current', current=True)
     entropies_current[i] = np.real(np.sum(solver.entropy))
 
 plt.rc('text', usetex=True)
