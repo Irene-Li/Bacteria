@@ -1,12 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import animation as am
 import time
-import scipy.sparse as sp
-from scipy.fftpack import fftfreq
 import json
-from StoEvolution1D import *
-from pseudospectral import evolve_sto_ps_active
+from StoEvolution2D import *
+# from pseudospectral import evolve_sto_ps_active
 import mkl_fft
 
 
@@ -82,21 +78,21 @@ class ActiveModelAB(StoEvolution2D):
     def print_params(self):
         super().print_params()
         print('lambda', self.lbda, '\n',
-		'zeta', self.zeta, '\n')
+        'zeta', self.zeta, '\n')
 
     def evolve(self, verbose=True, cython=True):
-		self.phi_initial = mkl_fft.fft2(self.phi_initial)
-		if cython:
-			print('not implemented')
-		else:
-			self.naive_evolve(verbose)
+        self.phi_initial = mkl_fft.fft2(self.phi_initial)
+        if cython:
+            print('not implemented')
+        else:
+            self.naive_evolve(verbose)
 
     def _delta(self, phi):
-		phi_x = mkl_fft.ifft2(phi)
-		self.phi_sq = mkl_fft.fft2(phi_x**2)
-		self.phi_cube = mkl_fft.fft2(phi_x**3)
-		np.putmask(self.phi_cube, self.dealiasing_triple, 0)
-		np.putmask(self.phi_sq, self.dealiasing_double, 0)
+        phi_x = mkl_fft.ifft2(phi)
+        self.phi_sq = mkl_fft.fft2(phi_x**2)
+        self.phi_cube = mkl_fft.fft2(phi_x**3)
+        np.putmask(self.phi_cube, self.dealiasing_triple, 0)
+        np.putmask(self.phi_sq, self.dealiasing_double, 0)
 
 
         # lambda term 
@@ -113,14 +109,13 @@ class ActiveModelAB(StoEvolution2D):
         np.putmask(zeta_term, self.dealiasing_double, 0)
 
 
+        mu = self.a*(-phi+self.phi_cube) + self.k*self.ksq*phi + self.lbda*lambda_term 
+        birth_death = - self.u*(self.phi_sq+(self.phi_shift-self.phi_target)*phi)
+        birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
+        dphidt = self.M1*(-self.ksq*mu + self.zeta*zeta_term)+ birth_death
+        return dphidt
 
-		mu = self.a*(-phi+self.phi_cube) + self.k*self.ksq*phi + self.lbda*lambda_term 
-		birth_death = - self.u*(self.phi_sq+(self.phi_shift-self.phi_target)*phi)
-		birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
-		dphidt = self.M1*(-self.ksq*mu + self.zeta*zeta_term)+ birth_death
-		return dphidt
 
-    
 
 
 
