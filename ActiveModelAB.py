@@ -99,13 +99,31 @@ class ActiveModelAB(StoEvolution2D):
 		np.putmask(self.phi_sq, self.dealiasing_double, 0)
 
 
+        # lambda term 
         dphidx = mkl_fft.ifft2(self.kx*phi)
         dphidy = mkl_fft.ifft2(self.ky*phi)
+        lambda_term = mkl_fft.fft2( - dphidx*dphidx - dphidy*dphidx)
+        np.putmask(lambda_term, self.dealiasing_double, 0)
+
+        # zeta term 
+        lap_phi = mkl_fft.ifft2(-self.ksq*phi)
+        Jx = mkl_fft.fft2(lap_phi*dphidx) 
+        Jy = mkl_fft.fft2(lap_phi*dphidy)
+        zeta_term = - self.kx*Jx - self.ky*Jy
+        np.putmask(zeta_term, self.dealiasing_double, 0)
 
 
 
-		mu = self.a*(-phi+self.phi_cube) + self.k*self.ksq*phi
+		mu = self.a*(-phi+self.phi_cube) + self.k*self.ksq*phi + self.lbda*lambda_term 
 		birth_death = - self.u*(self.phi_sq+(self.phi_shift-self.phi_target)*phi)
 		birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
-		dphidt = -self.M1*self.ksq*mu + birth_death
+		dphidt = self.M1*(-self.ksq*mu + self.zeta*zeta_term)+ birth_death
 		return dphidt
+
+    
+
+
+
+
+
+
