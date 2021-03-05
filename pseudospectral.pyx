@@ -3,7 +3,7 @@ import mkl_fft
 cimport numpy as np
 cimport cython
 from cython.view cimport array
-from libc.math cimport sqrt, fmin, M_PI, ceil
+from libc.math cimport sqrt, fmin, M_PI, ceil, fabs 
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
@@ -242,6 +242,108 @@ def evolve_det_ps(np.complex128_t [:, :] init, double a, double k, double u, dou
 				else:
 					birth_death = - u*(phi_s-phi_t)*temp - u*phi_sq[j,m]
 				phi[j,m] = dt*(-ksq*mu+birth_death) + temp
+
+		phi[0,0] = u*phi_s*phi_t*(size*size)*dt + phi[0,0]
+
+	return phi_evol
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def evolve_sto_ps_active(np.complex128_t [:, :] init, double M1, double a, double k, double u, 
+							double phi_s, double phi_t, double lbda, double zeta,
+							double epsilon, double dt, int nitr, int n_batches, int size):
+	cdef np.float64_t [:, :, :] phi_evol
+	cdef np.complex128_t [:, :] phi, phi_cube, phi_sq, dW, lambda_term 
+	cdef np.complex128_t [:, :] phi_x, phi_x_cube, phi_x_sq, lambda_term_x
+	cdef np.complex128_t [:, :] dphidx_k, dphidy_k, dphidx, dphidy 
+	cdef np.complex128_t [:, :] lap_phi, lap_phi_k, Jx, Jy, Jx_x, Jy_x
+	cdef double [:] k_array
+	cdef Py_ssize_t n, i, j, m, batch_size
+	cdef double M2
+	cdef double kmax_half, kmax_two_thirds, kx, ky, ksq, factor
+	cdef np.complex128_t temp
+	cdef np.complex128_t birth_death, noise, mu, zeta_term 
+
+	M2 = u*(phi_s + phi_t/2.0)
+	kmax_half = M_PI/2.0
+	kmax_two_thirds = M_PI*2.0/3.0
+	factor = M_PI*2.0
+
+	phi_x_sq = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	phi_x_cube = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	dphidx_k = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	dphidy_k = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	lambda_term_x = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	lap_phi_k = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	Jx_x = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	Jy_x = array(shape=(size, size), itemsize=sizeof(np.complex128_t), format='Zd')
+	k_array = np.fft.fftfreq(size)
+
+
+	phi = init
+	batch_size = int(nitr/n_batches)
+	nitr = batch_size * n_batches
+	phi_evol = np.empty((n_batches, size, size), dtype='float64')
+
+	n = 0
+	for i in xrange(nitr):
+		phi_x = mkl_fft.ifft2(phi)
+
+		if i % batch_size == 0:
+			for j in xrange(size):
+				for m in xrange(size):
+					phi_evol[n, j, m] = phi_x[j, m].real
+			print('iteration: {},  mean: {}'.format(n, phi[0,0].real/(size*size)))
+			n += 1
+
+		for j in xrange(size):
+			for m in xrange(size):
+				kx = k_array[j]*factor 
+				ky = k_array[m]*factor
+				ksq = kx*kx+ky*ky
+				dphidx_k[j,m] = kx*phi[j,m]
+				dphidy_k[j,m] = ky*phi[j,m]
+				lap_phi_k[j,m] = -ksq*phi[j,m]
+
+		dphidx = mkl_fft.ifft2(dphidx_k)
+		dphidy = mkl_fft.ifft2(dphidy_k)
+		lap_phi = mkl_fft.ifft2(lap_phi_k)
+
+		for j in xrange(size):
+			for m in xrange(size):
+				temp = phi_x[j,m]
+				phi_x_sq[j,m] = temp*temp
+				phi_x_cube[j,m] = temp*temp*temp
+				lambda_term_x[j,m] = -dphidx[j,m]*dphidx[j,m] - dphidy[j,m]*dphidy[j,m]
+				Jx_x[j,m] = lap_phi[j,m]*dphidx[j,m]
+				Jy_x[j,m] = lap_phi[j,m]*dphidy[j,m]
+
+		phi_cube = mkl_fft.fft2(phi_x_cube)
+		phi_sq = mkl_fft.fft2(phi_x_sq)
+		lambda_term = mkl_fft.fft2(lambda_term_x)
+		Jx = mkl_fft.fft2(Jx_x)
+		Jy = mkl_fft.fft2(Jy_x)
+		dW = mkl_fft.fft2(np.random.normal(size=(size, size)).astype('complex128'))
+
+		for j in xrange(size):
+			for m in xrange(size):
+				kx = k_array[j]*factor
+				ky = k_array[m]*factor
+				ksq = kx*kx + ky*ky
+				temp = phi[j,m]
+				if (fabs(kx)>kmax_half) or (fabs(ky)>kmax_half):
+					mu = (k*ksq-a)*temp
+				else:
+					mu = a*phi_cube[j,m] + (k*ksq-a)*temp
+				if (fabs(kx)>kmax_two_thirds) or (fabs(ky)>kmax_two_thirds):
+					birth_death = - u*(phi_s-phi_t)*temp
+					zeta_term = 0 
+				else:
+					birth_death = - u*(phi_s-phi_t)*temp - u*phi_sq[j,m]
+					zeta_term = zeta*(-kx*Jx[j,m]-ky*Jy[j,m])
+					mu += lbda*lambda_term[j,m]
+				noise = sqrt(2*(M2+M1*ksq)*epsilon*dt)*dW[j,m]
+				phi[j,m] = dt*(M1*(-ksq*mu+zeta_term)+birth_death) +noise + temp
 
 		phi[0,0] = u*phi_s*phi_t*(size*size)*dt + phi[0,0]
 

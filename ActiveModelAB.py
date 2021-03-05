@@ -2,7 +2,7 @@ import numpy as np
 import time
 import json
 from StoEvolution2D import *
-# from pseudospectral import evolve_sto_ps_active
+from pseudospectral import evolve_sto_ps_active
 import mkl_fft
 
 
@@ -83,7 +83,10 @@ class ActiveModelAB(StoEvolution2D):
     def evolve(self, verbose=True, cython=True):
         self.phi_initial = mkl_fft.fft2(self.phi_initial)
         if cython:
-            print('not implemented')
+            nitr = int(self.T/self.dt)
+            self.phi = evolve_sto_ps_active(self.phi_initial, self.M1, self.a, self.k, self.u,
+                                        self.phi_shift, self.phi_target, self.lbda, self.zeta,
+                                        self.epsilon, self.dt, nitr, self.n_batches, self.X)
         else:
             self.naive_evolve(verbose)
 

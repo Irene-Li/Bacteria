@@ -33,7 +33,7 @@ class StoEvolution2D(StoEvolution1D):
 			if i % self.batch_size == 0:
 				self.phi[n] = np.real(mkl_fft.ifft2(phi))
 				if verbose:
-					print('iteration: {}	mean bd: {}'.format(n, self._mean_bd(self.phi[n])))
+					print('iteration: {}	mean: {}'.format(n, phi[0, 0].real/(self.X*self.X)))
 				n += 1
 			phi += self._delta(phi)*self.dt + self._noisy_delta()
 
