@@ -98,7 +98,7 @@ class ActiveModelAB(StoEvolution2D):
         # lambda term 
         dphidx = mkl_fft.ifft2(self.kx*phi)
         dphidy = mkl_fft.ifft2(self.ky*phi)
-        lambda_term = mkl_fft.fft2( - dphidx*dphidx - dphidy*dphidx)
+        lambda_term = mkl_fft.fft2( - dphidx*dphidx - dphidy*dphidy)
         np.putmask(lambda_term, self.dealiasing_double, 0)
 
         # zeta term 
