@@ -4,22 +4,29 @@ from StoEvolution2D import *
 from DetEvolution2D import *
 from StoEvolution1D import *
 from DetEvolution1D import *
+from ActiveModelAB import * 
 
 sto = True
 twod = True
-
-phi_t = -0.4
-phi_s = 1.4
-u = 1e-5
-old_label = 'phi_t_{}_phi_s_{}_u_{}'.format(phi_t, phi_s, u)
-new_label= 'phi_t_{}_phi_s_{}_u_{}_2'.format(phi_t, phi_s, u)
+active = True 
 
 T = 5e3
+
+phi_t = 0.3 
+u = 5e-5 
+lbda = 0 
+zeta = 0 
+
+old_label = 'phi_t_{}_u_{}_lambda_{}_zeta_{}'.format(phi_t, u, lbda, zeta)
+new_label= old_label + '_2'
 
 start_time = time.time()
 if twod:
     if sto:
-        solver = StoEvolution2D()
+    	if active:
+    		solver = ActiveModelAB()  
+    	else: 
+        	solver = StoEvolution2D()
     else:
         solver = DetEvolution2D()
 else:
@@ -28,7 +35,7 @@ else:
     else:
         solver = DetEvolution1D()
 solver.load(old_label)
-solver.continue_evolution(T, pert=True)
+solver.continue_evolution(T, pert=False)
 solver.save(new_label)
 solver.make_movie(new_label)
 end_time = time.time()
