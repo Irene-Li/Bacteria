@@ -3,7 +3,6 @@ import time
 import json
 from StoEvolution2D import *
 from pseudospectral import evolve_sto_ps_active
-import mkl_fft
 
 
 class ActiveModelAB(StoEvolution2D):
@@ -81,7 +80,7 @@ class ActiveModelAB(StoEvolution2D):
         'zeta', self.zeta, '\n')
 
     def evolve(self, verbose=True, cython=True):
-        self.phi_initial = mkl_fft.fft2(self.phi_initial)
+        self.phi_initial = np.fft.fft2(self.phi_initial)
         if cython:
             nitr = int(self.T/self.dt)
             self.phi = evolve_sto_ps_active(self.phi_initial, self.M1, self.a, self.k, self.u,
@@ -89,33 +88,46 @@ class ActiveModelAB(StoEvolution2D):
                                         self.epsilon, self.dt, nitr, self.n_batches, self.X)
         else:
             self.naive_evolve(verbose)
+            # self._make_k_grid()
+            # self._make_filters()
+            # phi = self.phi_initial
+            # delta = self._delta(self.phi_initial)
+            # noisy_delta = self._noisy_delta()
+            # plt.imshow(np.fft.ifft2(delta).real)
+            # plt.show() 
+
+            # plt.imshow(np.fft.ifft2(noisy_delta).real)
+            # plt.show() 
+
+            # phi += delta*self.dt + noisy_delta
+            # plt.imshow(np.fft.ifft2(phi).real)
+            # plt.show()
 
     def _delta(self, phi):
-        phi_x = mkl_fft.ifft2(phi)
-        self.phi_sq = mkl_fft.fft2(phi_x**2)
-        self.phi_cube = mkl_fft.fft2(phi_x**3)
+        phi_x = np.fft.ifft2(phi)
+        self.phi_sq = np.fft.fft2(phi_x*phi_x)
+        self.phi_cube = np.fft.fft2(phi_x*phi_x*phi_x)
         np.putmask(self.phi_cube, self.dealiasing_triple, 0)
         np.putmask(self.phi_sq, self.dealiasing_double, 0)
 
-
         # lambda term 
-        dphidx = mkl_fft.ifft2(self.kx*phi)
-        dphidy = mkl_fft.ifft2(self.ky*phi)
-        lambda_term = mkl_fft.fft2( - dphidx*dphidx - dphidy*dphidy)
+        dphidx = np.fft.ifft2(1j*self.kx*phi)
+        dphidy = np.fft.ifft2(1j*self.ky*phi)
+        lambda_term = np.fft.fft2( dphidx*dphidx + dphidy*dphidy)
         np.putmask(lambda_term, self.dealiasing_double, 0)
 
         # zeta term 
-        lap_phi = mkl_fft.ifft2(-self.ksq*phi)
-        Jx = mkl_fft.fft2(lap_phi*dphidx) 
-        Jy = mkl_fft.fft2(lap_phi*dphidy)
-        zeta_term = - self.kx*Jx - self.ky*Jy
+        lap_phi = np.fft.ifft2(-self.ksq*phi)
+        Jx = np.fft.fft2(lap_phi*dphidx) 
+        Jy = np.fft.fft2(lap_phi*dphidy)
+        zeta_term = - 1j*self.kx*Jx - 1j*self.ky*Jy
         np.putmask(zeta_term, self.dealiasing_double, 0)
 
 
         mu = self.a*(-phi+self.phi_cube) + self.k*self.ksq*phi + self.lbda*lambda_term 
-        birth_death = - self.u*(self.phi_sq+(self.phi_shift-self.phi_target)*phi)
-        birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
-        dphidt = self.M1*(-self.ksq*mu + self.zeta*zeta_term)+ birth_death
+        # birth_death = - self.u*(self.phi_sq+(self.phi_shift-self.phi_target)*phi)
+        # birth_death[0, 0] += self.u*self.phi_shift*self.phi_target*self.size**2
+        dphidt = self.M1*(-self.ksq*mu + self.zeta*zeta_term) #+ birth_death
         return dphidt
 
 

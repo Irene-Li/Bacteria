@@ -31,11 +31,15 @@ class StoEvolution2D(StoEvolution1D):
 		n = 0
 		for i in range(int(self.T/self.dt)):
 			if i % self.batch_size == 0:
-				self.phi[n] = np.real(mkl_fft.ifft2(phi))
+				phi_x = np.real(mkl_fft.ifft2(phi))
+				self.phi[n] = phi_x
 				if verbose:
 					print('iteration: {}	mean: {}'.format(n, phi[0, 0].real/(self.X*self.X)))
 				n += 1
-			phi += self._delta(phi)*self.dt + self._noisy_delta()
+			delta = self._delta(phi)*self.dt 
+			noisy_delta = self._noisy_delta()
+			phi += delta + noisy_delta
+			# phi_x = np.real(mkl_fft.ifft2(phi))
 
 
 	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, skew=0, flat=True):
@@ -108,7 +112,7 @@ class StoEvolution2D(StoEvolution1D):
 
 	def _flat_surface(self, initial_value):
 		dW = np.random.normal(size=(self.size, self.size))
-		noise = self.dt*dW
+		noise = self.dt*dW*np.sqrt(self.epsilon)
 		phi = noise+initial_value
 		return phi
 
@@ -147,7 +151,7 @@ class StoEvolution2D(StoEvolution1D):
 
 	def make_movie(self, label, t_grid=1):
 		fig = plt.figure()
-		low, high = -1, 1
+		low, high = -1, 1 # low, high = -1, 1
 		ims = []
 		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True, cmap='seismic')
 		plt.axis('off')

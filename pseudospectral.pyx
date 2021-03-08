@@ -301,8 +301,8 @@ def evolve_sto_ps_active(np.complex128_t [:, :] init, double M1, double a, doubl
 				kx = k_array[j]*factor 
 				ky = k_array[m]*factor
 				ksq = kx*kx+ky*ky
-				dphidx_k[j,m] = kx*phi[j,m]
-				dphidy_k[j,m] = ky*phi[j,m]
+				dphidx_k[j,m] = 1j*kx*phi[j,m]
+				dphidy_k[j,m] = 1j*ky*phi[j,m]
 				lap_phi_k[j,m] = -ksq*phi[j,m]
 
 		dphidx = mkl_fft.ifft2(dphidx_k)
@@ -314,7 +314,7 @@ def evolve_sto_ps_active(np.complex128_t [:, :] init, double M1, double a, doubl
 				temp = phi_x[j,m]
 				phi_x_sq[j,m] = temp*temp
 				phi_x_cube[j,m] = temp*temp*temp
-				lambda_term_x[j,m] = -dphidx[j,m]*dphidx[j,m] - dphidy[j,m]*dphidy[j,m]
+				lambda_term_x[j,m] = dphidx[j,m]*dphidx[j,m] + dphidy[j,m]*dphidy[j,m]
 				Jx_x[j,m] = lap_phi[j,m]*dphidx[j,m]
 				Jy_x[j,m] = lap_phi[j,m]*dphidy[j,m]
 
@@ -340,7 +340,7 @@ def evolve_sto_ps_active(np.complex128_t [:, :] init, double M1, double a, doubl
 					zeta_term = 0 
 				else:
 					birth_death = - u*(phi_s-phi_t)*temp - u*phi_sq[j,m]
-					zeta_term = zeta*(-kx*Jx[j,m]-ky*Jy[j,m])
+					zeta_term = -zeta*(1j*kx*Jx[j,m]+1j*ky*Jy[j,m])
 					mu += lbda*lambda_term[j,m]
 				noise = sqrt(2*(M2+M1*ksq)*epsilon*dt)*dW[j,m]
 				phi[j,m] = dt*(M1*(-ksq*mu+zeta_term)+birth_death) +noise + temp
