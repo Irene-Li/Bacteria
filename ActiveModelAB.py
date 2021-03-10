@@ -87,7 +87,7 @@ class ActiveModelAB(StoEvolution2D):
         if cython:
             nitr = int(self.T/self.dt)
             if fd: 
-                pass 
+                raise Exception('Not implemented')
             else: 
                 self.phi = evolve_sto_ps_active(np.fft.fft2(self.phi_initial), self.M1, self.a, self.k, self.u,
                                         self.phi_shift, self.phi_target, self.lbda, self.zeta,
