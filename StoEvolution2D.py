@@ -39,7 +39,7 @@ class StoEvolution2D(StoEvolution1D):
 			delta = self._delta(phi)*self.dt 
 			noisy_delta = self._noisy_delta()
 			phi += delta + noisy_delta
-			# phi_x = np.real(mkl_fft.ifft2(phi))
+
 
 
 	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, skew=0, flat=True):
@@ -85,7 +85,7 @@ class StoEvolution2D(StoEvolution1D):
 		self.ksq = self.kx*self.kx + self.ky*self.ky
 
 	def _make_filters(self):
-		kmax = np.max(np.abs(self.kx))
+		kmax = np.pi
 		filtr = (np.abs(self.kx) > kmax*2/3)
 		filtr2 = (np.abs(self.kx) > kmax*1/2)
 
@@ -151,7 +151,7 @@ class StoEvolution2D(StoEvolution1D):
 
 	def make_movie(self, label, t_grid=1):
 		fig = plt.figure()
-		low, high = -1, 1 # low, high = -1, 1
+		low, high = -2, 2 # low, high = -1, 1
 		ims = []
 		im = plt.imshow(self.phi[0], vmin=low, vmax=high, animated=True, cmap='seismic')
 		plt.axis('off')
