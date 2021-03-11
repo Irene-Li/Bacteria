@@ -92,7 +92,7 @@ class TimeEvolution:
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
-		self.evolve(kwargs)
+		self.evolve(**kwargs)
 
 
 	def count(self):

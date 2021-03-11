@@ -54,7 +54,7 @@ class StoEvolution2D(StoEvolution1D):
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
-		self.evolve(kwargs)
+		self.evolve(**kwargs)
 
 	def double_droplet_init(self):
 		x = np.arange(self.size)
