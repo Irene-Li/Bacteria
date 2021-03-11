@@ -47,14 +47,14 @@ class StoEvolution2D(StoEvolution1D):
 		if not flat:
 			self.phi_initial = self._droplet_init(radius, skew)
 
-	def continue_evolution(self, T, pert=False):
+	def continue_evolution(self, T, pert=False, **kwargs):
 		self.phi_initial = self.phi[-2]
 		if pert:
 			self._add_perturbation()
 		self.T = T
 		self.n_batches = int(self.T/self.step_size+1)
 		self.batch_size = int(self.step_size/self.dt)
-		self.evolve()
+		self.evolve(kwargs)
 
 	def double_droplet_init(self):
 		x = np.arange(self.size)
