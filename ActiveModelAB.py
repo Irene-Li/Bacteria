@@ -83,7 +83,7 @@ class ActiveModelAB(StoEvolution2D):
         print('lambda', self.lbda, '\n',
         'zeta', self.zeta, '\n')
 
-    def evolve(self, verbose=True, cython=True, fd=True):
+    def evolve(self, verbose=True, cython=False, fd=True):
         if cython:
             nitr = int(self.T/self.dt)
             if fd: 
