@@ -42,10 +42,13 @@ class StoEvolution2D(StoEvolution1D):
 
 
 
-	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, skew=0, flat=True):
+	def initialise(self, X, dx, T, dt, n_batches, initial_value=0, radius=20, skew=0, flat=True, droplet=True):
 		super().initialise(X, dx, T, dt, n_batches, initial_value, flat=True)
 		if not flat:
-			self.phi_initial = self._droplet_init(radius, skew)
+			if droplet: 
+				self.phi_initial = self._droplet_init(radius, skew, gas_density=-1)
+			else: 
+				self.phi_initial = self._droplet_init(radius, skew, gas_density=1) 
 
 	def continue_evolution(self, T, pert=False, **kwargs):
 		self.phi_initial = self.phi[-2]
