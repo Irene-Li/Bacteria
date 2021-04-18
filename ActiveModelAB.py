@@ -1,8 +1,8 @@
 import numpy as np
 import time
 import json
-from StoEvolution2D import *
-from pseudospectral import evolve_sto_ps_active
+from Bacteria.StoEvolution2D import *
+from . import pseudospectral as ps 
 import pygl 
 
 rng = np.random.default_rng() 
@@ -89,7 +89,7 @@ class ActiveModelAB(StoEvolution2D):
             if fd: 
                 raise Exception('Not implemented')
             else: 
-                self.phi = evolve_sto_ps_active(np.fft.fft2(self.phi_initial), self.M1, self.a, self.k, self.u,
+                self.phi = ps.evolve_sto_ps_active(np.fft.fft2(self.phi_initial), self.M1, self.a, self.k, self.u,
                                         self.phi_shift, self.phi_target, self.lbda, self.zeta,
                                         self.epsilon, self.dt, nitr, self.n_batches, self.X)
         else:

@@ -5,8 +5,8 @@ import time
 import scipy.sparse as sp
 from scipy.fftpack import fftfreq
 import json
-from StoEvolution1D import *
-from pseudospectral import evolve_sto_ps
+from .StoEvolution1D import StoEvolution1D
+from . import pseudospectral as ps 
 import mkl_fft
 
 
@@ -16,7 +16,7 @@ class StoEvolution2D(StoEvolution1D):
 		self.phi_initial = mkl_fft.fft2(self.phi_initial)
 		if cython:
 			nitr = int(self.T/self.dt)
-			self.phi = evolve_sto_ps(self.phi_initial, self.a, self.k, self.u,
+			self.phi = ps.evolve_sto_ps(self.phi_initial, self.a, self.k, self.u,
 										self.phi_shift, self.phi_target, self.epsilon,
 										self.dt, nitr, self.n_batches, self.X)
 		else:

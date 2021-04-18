@@ -2,12 +2,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.integrate import ode
 from scipy.fftpack import irfft, rfft, fft
-from TimeEvolution import TimeEvolution
-from DetEvolution1D import DetEvolution1D
+from .TimeEvolution import TimeEvolution
+from .DetEvolution1D import DetEvolution1D
 import json
 import scipy.sparse as sp
 import os
-from pseudospectral import evolve_sto_ps_1d
+from . import pseudospectral as ps
 
 
 class StoEvolution1D(DetEvolution1D):
@@ -98,7 +98,7 @@ class StoEvolution1D(DetEvolution1D):
 	def evolve_ps(self):
 		phi = fft(self.phi_initial)
 		nitr = int(self.T/self.dt)
-		self.phi = evolve_sto_ps_1d(phi, self.a, self.k, self.u,
+		self.phi = ps.evolve_sto_ps_1d(phi, self.a, self.k, self.u,
 									self.phi_shift, self.phi_target, self.epsilon,
 									self.dt, nitr, self.n_batches, self.X)
 

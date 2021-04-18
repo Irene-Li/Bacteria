@@ -4,8 +4,8 @@ import time
 from scipy.integrate import ode
 import scipy.sparse as sp
 import json
-from TimeEvolution import TimeEvolution
-from pseudospectral import delta_phi_ps_1d
+from .TimeEvolution import TimeEvolution
+from . import pseudospectral as ps 
 
 
 class DetEvolution1D(TimeEvolution):
@@ -69,7 +69,7 @@ class DetEvolution1D(TimeEvolution):
 
 	def _ps_delta_phi(self, t, phi):
 		phi_complex = phi.astype('complex128')
-		delta_phi = delta_phi_ps_1d(phi_complex, self.a, self.k, self.u,
+		delta_phi = ps.delta_phi_ps_1d(phi_complex, self.a, self.k, self.u,
 									 self.phi_shift, self.phi_target,
 									 self.kmax_half, self.kmax_two_thirds,
 									 self.factor, self.size)

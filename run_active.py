@@ -6,25 +6,26 @@ from StoEvolution2D import *
 
 # Model parameters
 epsilon = 0.2
-phi_t = -0.4
+phi_t = -0.8
 phi_shift = 10
 # delta = 10
-u = 0
+u = 1e-6
 
 # run parameters and init
 X = 128
-n_batches = 100
+n_batches = 50
 flat = False 
-radius = 35
-T = 1e3
+radius = 60
+T = 1e2
+droplet = False 
 
 # things that don't change
 a = 0.25
 k = 1
 dx = 1
-dt = 1e-2
-lbda = 1
-zeta = 4
+dt = 0.01
+lbda = 0
+zeta = 0
 label = 'test'
 
 solver = ActiveModelAB(epsilon, a, k, u, phi_t, phi_shift, lbda, zeta)
@@ -33,7 +34,7 @@ solver = ActiveModelAB(epsilon, a, k, u, phi_t, phi_shift, lbda, zeta)
 
 #solver.calculate_u(delta)
 solver.initialise(X, dx, T, dt, n_batches, initial_value=phi_t, flat=flat, 
-					radius=radius)
+					radius=radius, skew=2, droplet=droplet)
 solver.save_params(label)
 solver.print_params()
 

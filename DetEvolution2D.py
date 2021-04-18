@@ -4,8 +4,8 @@ from matplotlib import animation as am
 import time
 from scipy.integrate import ode
 from mkl_fft import fft2, ifft2
-from pseudospectral import evolve_det_ps
-from StoEvolution2D import *
+from . import pseudospectral as ps 
+from .StoEvolution2D import StoEvolution2D 
 
 
 class DetEvolution2D(StoEvolution2D):
@@ -19,7 +19,7 @@ class DetEvolution2D(StoEvolution2D):
 	def evolve_fd(self):
 		phi = fft2(self.phi_initial)
 		nitr = int(self.T/self.dt)
-		self.phi = evolve_det_ps(phi, self.a, self.k, self.u, self.phi_shift,
+		self.phi = ps.evolve_det_ps(phi, self.a, self.k, self.u, self.phi_shift,
 						self.phi_target, self.dt, nitr,
 						self.n_batches, self.size)
 

@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.special import iv, kn
 from scipy.optimize import root_scalar
-from StoEvolution2D import *
+from .StoEvolution2D import StoEvolution2D
 
 class Droplet():
 
@@ -437,21 +437,21 @@ if __name__ == '__main__':
     n_list = [13, 125]
     A = 256**2
 
-    ## Calculate single droplet r_dot against r
-    # solver = Droplet(A)
-    # solver.calculate_params()
-    # phi_targets = [-0.7, -0.8]
-    # us = [1e-4, 5e-5]
-    # solver.plot_r_dot_single(us, phi_targets)
+    # Calculate single droplet r_dot against r
+    solver = Droplet(A)
+    solver.calculate_params()
+    phi_targets = [-0.9, -0.8]
+    us = [1e-6, 5e-6]
+    solver.plot_r_dot_single(us, phi_targets)
 
     ## Plot r_dot and omega_+ for multiple droplets
-    phi_target = -0.7
-    u = 5e-5
-    solver = Droplet(A, phi_target=phi_target, u=u)
-    solver.set_boundary_conditions('pbc')
-    solver.calculate_params()
-    n_list = [13, 85]
-    solver.plot_r_dot_mult(n_list)
+    # phi_target = -0.9
+    # u = 5e-5
+    # solver = Droplet(A, phi_target=phi_target, u=u)
+    # solver.set_boundary_conditions('pbc')
+    # solver.calculate_params()
+    # n_list = [13, 85]
+    # solver.plot_r_dot_mult(n_list)
 
 
 

@@ -4,8 +4,8 @@ import scipy.sparse as sp
 import scipy.sparse.linalg
 from scipy.fftpack import fft, ifft, fftfreq
 import time
-from DetEvolution1D import DetEvolution1D
-from Entropy import *
+from .DetEvolution1D import DetEvolution1D 
+from .Entropy import EntropyProduction
 
 class EvolveModelAB(DetEvolution1D):
     def __init__(self, M1=None, k=None, M2=None, delta_b=None):

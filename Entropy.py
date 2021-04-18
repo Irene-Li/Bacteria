@@ -6,7 +6,7 @@ import scipy.linalg as sl
 import scipy.sparse.linalg
 from scipy.fftpack import fft, ifft, fftfreq
 import json
-from TimeEvolution import TimeEvolution
+from .TimeEvolution import TimeEvolution
 
 class EntropyProduction(TimeEvolution):
 
